@@ -99,6 +99,7 @@ menu = True
 while running:
     # menu loop
     while menu:
+        screen.fill(light_grey)
         # TODO Menu Buttons
         for event in pygame.event.get():
             if event.type == KEYDOWN:
@@ -108,6 +109,8 @@ while running:
                 elif event.key == K_SPACE:
                     menu = False
                     gaming = True
+
+        pygame.display.flip()
 
     # game running loop
     while gaming:
