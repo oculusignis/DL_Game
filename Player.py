@@ -15,8 +15,10 @@ from pygame.locals import (
 # Define player object as extension of pygame.sprite.Sprite
 # Surface drawn on screen is now an attribute of 'player'
 class Player(pygame.sprite.Sprite):
+    """Player Object, controlled by WASD and SPACE"""
 
     def __init__(self, mult):
+        """Initialize Player with the scaling Multiplier"""
         super().__init__()
         self.size_multiplier = mult
         self.xy_change = [0, 0]
@@ -25,22 +27,24 @@ class Player(pygame.sprite.Sprite):
         self.base_speed = 4
         self.spritenumber = {"ticks": 0, "move": 0}
         self.dashing = False
-        self.dash_counter = 1000
+        self.dash_counter = 500
         self.attack_counter = 0
         self.click = False
-        self.ss = SpriteSheet('resources/Sam.png')
+        self.alive = True
+        self.ss = SpriteSheet('resources/Sam52.png')
         self.image = self.getspriteimage()
         # define color that should be transparent
-        # self.image.set_colorkey((255, 255, 255), RLEACCEL)
-        self.rect = self.image.get_rect()
+        # self.image.set_colorkey((255, 255, 254), RLEACCEL)
+        self.rect = self.image.get_bounding_rect()
 
     def getspriteimage(self):
         """produces a pygame image from the spritesheet"""
-        size = 32
-        screensize = size*self.size_multiplier
-        x = self.spritenumber["move"] * size
-        y = self.orientationLib[self.orientation] * 32
-        x = pygame.transform.scale(self.ss.image_at((x, y, size, size), -1), (screensize, screensize))
+        sizex = 22
+        sizey = 28
+        x = self.spritenumber["move"] * sizex
+        y = self.orientationLib[self.orientation] * sizey
+        x = pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),
+                                   (sizex*self.size_multiplier, sizey*self.size_multiplier)).convert_alpha()
 
         return x    # TODO crop rectangle to surface
 

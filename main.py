@@ -5,8 +5,10 @@ import random
 import pygame
 from Player import Player
 from colorbox import ColorBox
+import enemys
 from pygame.locals import (
     RLEACCEL,
+    K_SPACE,
     K_ESCAPE,
     KEYDOWN,
     QUIT,
@@ -63,18 +65,25 @@ ADDENEMY = pygame.USEREVENT + 1
 ADDCLOUD = pygame.USEREVENT + 2
 pygame.time.set_timer(ADDCLOUD, 1000)
 
-# Instantiate Player
-player = Player(size_multiplier)
-player.move((SCREEN_WIDTH/2, SCREEN_HEIGHT - SCREEN_HEIGHT/8))
-randomBox = ColorBox(SCREEN_WIDTH, SCREEN_HEIGHT)
-
 # Create Sprite Groups
 enemies = pygame.sprite.Group()
 boxes = pygame.sprite.Group()
-boxes.add(randomBox)
 all_sprites = pygame.sprite.Group()
-all_sprites.add(randomBox)
+
+# Instantiate Player
+player = Player(size_multiplier)
+player.move((SCREEN_WIDTH/2, SCREEN_HEIGHT - SCREEN_HEIGHT/8))
 all_sprites.add(player)
+
+# Instantiate Colorbox
+randomBox = ColorBox(SCREEN_WIDTH, SCREEN_HEIGHT)
+boxes.add(randomBox)
+all_sprites.add(randomBox)
+
+# Instantiate Enemy
+enemy = enemys.Enemy1(3)
+enemies.add(enemy)
+all_sprites.add(enemy)
 
 # Setup Clock
 clock = pygame.time.Clock()
@@ -84,61 +93,80 @@ bg_color = light_blue
 
 # Run until the user asks to quit
 running = True
+gaming = False
+menu = True
+# Window loop
 while running:
+    # menu loop
+    while menu:
+        # TODO Menu Buttons
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    menu = False
+                    running = False
+                elif event.key == K_SPACE:
+                    menu = False
+                    gaming = True
 
-    # Did the user click the window close button?
-    for event in pygame.event.get():
+    # game running loop
+    while gaming:
 
-        # User press Key?
-        if event.type == KEYDOWN:
-            if event.key == K_ESCAPE:
-                running = False
+        # Did the user click the window close button?
+        for event in pygame.event.get():
 
-        # User press Close Window?
-        elif event.type == QUIT:
-            running = False
+            # User press Key?
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    gaming = False
+                    menu = True
 
-        # Add new enemy?
-        elif event.type == ADDENEMY:
-            new_enemy = Enemy()
-            enemies.add(new_enemy)
-            all_sprites.add(new_enemy)
+            # User press Close Window?
+            elif event.type == QUIT:
+                gaming = False
 
-        elif event.type == MOUSEBUTTONDOWN:
-            player.click = True
+            # Add new enemy?
+            elif event.type == ADDENEMY:
+                new_enemy = Enemy()
+                enemies.add(new_enemy)
+                all_sprites.add(new_enemy)
 
-    # get set of pressed keys
-    pressed_keys = pygame.key.get_pressed()
+            elif event.type == MOUSEBUTTONDOWN:
+                player.click = True
 
-    # update player
-    player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT)
+        # get set of pressed keys
+        pressed_keys = pygame.key.get_pressed()
 
-    # update enemies
-    # enemies.update()
+        # update player
+        player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-    # Check if player has collected a colorbox
-    if pygame.sprite.spritecollideany(player, boxes):
-        randomBox.move()
-        # bg_color = random.choice(bg_lib)
-        bg_color = (random.randint(190, 255), random.randint(190, 255), random.randint(190, 255))
+        # update enemies
+        enemies.update(player)
 
-    # Set Background Color
-    screen.fill(bg_color)
+        # Check if player has collected a colorbox
+        if pygame.sprite.spritecollideany(player, boxes):
+            randomBox.move()
+            # bg_color = random.choice(bg_lib)
+            bg_color = (random.randint(190, 255), random.randint(190, 255), random.randint(190, 255))
 
-    # Draw all entities
-    for entity in all_sprites:
-        screen.blit(entity.image, entity.rect)
+        # Set Background Color
+        screen.fill(bg_color)
 
-    # Check if any enemies has collided with player
-    # if pygame.sprite.spritecollideany(player, enemies):
-    #     player.kill()
-    #     running = False
+        # Draw all entities
+        for entity in all_sprites:
+            screen.blit(entity.image, entity.rect)
 
-    # Flip the display
-    pygame.display.flip()
+        # Check if any enemies has collided with player
+        if pygame.sprite.spritecollideany(player, enemies):
+            player.kill()
+            player.alive = False
+        #     gaming = False
 
-    # Ensure program maintains 30 FPS
-    clock.tick(120)
+        # Flip the display
+        pygame.display.flip()
+
+        # Ensure program maintains 30 FPS
+        clock.tick(120)
 
 # Done! Time to quit.
 pygame.quit()
