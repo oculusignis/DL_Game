@@ -1,6 +1,5 @@
 # Simple pygame program
 # Import and initialize the pygame library
-import math
 import random
 import pygame
 from Player import Player
