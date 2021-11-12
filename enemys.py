@@ -7,7 +7,7 @@ class Enemy1(pygame.sprite.Sprite):
     def __init__(self, mult):
         super().__init__()
         self.size_multiplier = mult
-        self.image = pygame.image.load('resources/testSprite/center.png')
+        self.image = pygame.image.load('resources/rectSprite/center.png')
         self.rect = self.image.get_rect()
         self.area = pygame.Rect((0, 0, 100, 100))
         self.area.center = self.rect.center

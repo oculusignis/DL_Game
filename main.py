@@ -2,8 +2,11 @@
 # Import and initialize the pygame library
 import random
 import pygame
+
+import menuScreen
 from Player import Player
 from colorbox import ColorBox
+from menuScreen import Menu
 import enemys
 from pygame.locals import (
     RLEACCEL,
@@ -26,6 +29,7 @@ light_red = (255, 194, 205)
 light_violet = (204, 194, 225)
 light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
+menu_color = (0xeb, 0xd2, 0xbe)
 
 
 # Enemy Class extending pygame.sprite.Sprite
@@ -71,7 +75,7 @@ all_sprites = pygame.sprite.Group()
 
 # Instantiate Player
 player = Player(size_multiplier)
-player.move((SCREEN_WIDTH/2, SCREEN_HEIGHT - SCREEN_HEIGHT/8))
+player.move((SCREEN_WIDTH / 2, SCREEN_HEIGHT - SCREEN_HEIGHT / 8))
 all_sprites.add(player)
 
 # Instantiate Colorbox
@@ -92,27 +96,34 @@ bg_color = light_blue
 
 # Run until the user asks to quit
 running = True
-gaming = False
-menu = True
+game_running = False
+menu_running = True
+menu = Menu(SCREEN_WIDTH, SCREEN_HEIGHT, size_multiplier)
+test = menuScreen.MenuButton(0, 0, (SCREEN_WIDTH, SCREEN_HEIGHT, size_multiplier))
+
 # Window loop
 while running:
-    # menu loop
-    while menu:
-        screen.fill(light_grey)
-        # TODO Menu Buttons
-        for event in pygame.event.get():
+    # menu_running loop
+    while menu_running:
+        screen.fill(menu_color)
+
+        events = pygame.event.get()
+        for event in events:
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    menu = False
+                    menu_running = False
                     running = False
-                elif event.key == K_SPACE:
-                    menu = False
-                    gaming = True
+                if event.key == K_SPACE:
+                    menu_running = False
+                    game_running = True
 
+        menu.update(events)
+        for button in menu.buttons:
+            screen.blit(button.image, button.rect)
         pygame.display.flip()
 
     # game running loop
-    while gaming:
+    while game_running:
 
         # Did the user click the window close button?
         for event in pygame.event.get():
@@ -120,12 +131,13 @@ while running:
             # User press Key?
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    gaming = False
-                    menu = True
+                    game_running = False
+                    menu_running = True
+                    menu.active = 0
 
             # User press Close Window?
             elif event.type == QUIT:
-                gaming = False
+                game_running = False
 
             # Add new enemy?
             elif event.type == ADDENEMY:
@@ -162,7 +174,7 @@ while running:
         if pygame.sprite.spritecollideany(player, enemies):
             player.kill()
             player.alive = False
-        #     gaming = False
+        #     game_running = False
 
         # Flip the display
         pygame.display.flip()

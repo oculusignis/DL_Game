@@ -6,7 +6,7 @@ from pygame.locals import (
     K_w,
     K_a,
     K_s,
-    K_d,
+    K_d
 )
 
 # TODO dash bar somewhere on the screen
@@ -122,7 +122,8 @@ class Player(pygame.sprite.Sprite):
         """update Player sprite"""
 
         # dash or (walk and charge dash)?
-        if self.dashing or (press_k[K_SPACE] and self.dash_counter == 1000):
+        dashable = all((press_k[K_SPACE], self.dash_counter == 1000, self.orientation != "idle"))
+        if self.dashing or dashable:
             self.dash()
         else:
             self.walk(press_k)
