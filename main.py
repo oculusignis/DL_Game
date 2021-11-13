@@ -3,14 +3,12 @@
 import random
 import pygame
 
-import menuScreen
 from Player import Player
 from colorbox import ColorBox
 from menuScreen import Menu
 import enemys
 from pygame.locals import (
     RLEACCEL,
-    K_SPACE,
     K_ESCAPE,
     KEYDOWN,
     QUIT,
@@ -29,7 +27,6 @@ light_red = (255, 194, 205)
 light_violet = (204, 194, 225)
 light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
-menu_color = (0xeb, 0xd2, 0xbe)
 
 
 # Enemy Class extending pygame.sprite.Sprite
@@ -98,32 +95,17 @@ bg_color = light_blue
 running = True
 game_running = False
 menu_running = True
-menu = Menu(SCREEN_WIDTH, SCREEN_HEIGHT, size_multiplier)
-test = menuScreen.MenuButton(0, 0, (SCREEN_WIDTH, SCREEN_HEIGHT, size_multiplier))
+menu = Menu(screen, size_multiplier)
+program_state = {"menu": True, "game": False}
 
 # Window loop
-while running:
-    # menu_running loop
-    while menu_running:
-        screen.fill(menu_color)
-
-        events = pygame.event.get()
-        for event in events:
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    menu_running = False
-                    running = False
-                if event.key == K_SPACE:
-                    menu_running = False
-                    game_running = True
-
-        menu.update(events)
-        for button in menu.buttons:
-            screen.blit(button.image, button.rect)
-        pygame.display.flip()
+while any(program_state.values()):
+    # run menu loop
+    if program_state["menu"]:
+        menu.menu_loop(program_state)
 
     # game running loop
-    while game_running:
+    while program_state["game"]:
 
         # Did the user click the window close button?
         for event in pygame.event.get():
@@ -131,13 +113,12 @@ while running:
             # User press Key?
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    game_running = False
-                    menu_running = True
-                    menu.active = 0
+                    program_state["game"] = False
+                    program_state["menu"] = True
 
             # User press Close Window?
             elif event.type == QUIT:
-                game_running = False
+                program_state["game"] = False
 
             # Add new enemy?
             elif event.type == ADDENEMY:

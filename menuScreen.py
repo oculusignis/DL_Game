@@ -1,6 +1,6 @@
 import pygame
 import spriteSheet
-from pygame.locals import (K_a, K_d, KEYDOWN)
+from pygame.locals import (K_a, K_d, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
 
 
 class MenuButton(pygame.sprite.Sprite):
@@ -31,13 +31,15 @@ class MenuButton(pygame.sprite.Sprite):
 class Menu:
     """manages menu_running buttons and their states"""
 
-    def __init__(self, screenw, screenh, sizer):
+    def __init__(self, screen: pygame.display, sizer):
         self.active = 0
-        window_stats = (screenw, screenh, sizer)
+        self.states = {0: "play", 1: "settings", 2: "exit"}
+        window_stats = (screen.get_width(), screen.get_height(), sizer)
         play_button = MenuButton(0, 1, window_stats)
         setting_button = MenuButton(1, 0, window_stats)
         exit_button = MenuButton(2, 0, window_stats)
         self.buttons = (play_button, setting_button, exit_button)
+        self.screen = screen
 
     def update(self, events):
         """update Buttons"""
@@ -50,3 +52,35 @@ class Menu:
 
         for button in self.buttons:
             button.update(self.active)
+
+    def menu_loop(self, program_state):
+        """runs the menu"""
+        menu_color = (0xeb, 0xd2, 0xbe)
+        while True:
+            self.screen.fill(menu_color)
+
+            events = pygame.event.get()
+            for event in events:
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        program_state["menu"] = False
+                        return
+                    if event.key == K_SPACE:
+                        if self.states[self.active] is "play":
+                            program_state["menu"] = False
+                            program_state["game"] = True
+                            return
+                        elif self.states[self.active] is "settings":
+                            # TODO
+                            pass
+                        elif self.states[self.active] is "exit":
+                            program_state["menu"] = False
+                            return
+                elif event.type == QUIT:
+                    program_state["menu"] = False
+                    return
+
+            self.update(events)
+            for button in self.buttons:
+                self.screen.blit(button.image, button.rect)
+            pygame.display.flip()
