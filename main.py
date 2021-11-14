@@ -88,9 +88,6 @@ all_sprites.add(enemy)
 # Setup Clock
 clock = pygame.time.Clock()
 
-# setup bg color
-bg_color = light_blue
-
 # Run until the user asks to quit
 running = True
 game_running = False
@@ -104,64 +101,69 @@ while any(program_state.values()):
     if program_state["menu"]:
         menu.menu_loop(program_state)
 
-    # game running loop
-    while program_state["game"]:
+    # run game loop
+    if program_state["game"]:
+        # initiate specific vars
+        bg_color = light_blue
 
-        # Did the user click the window close button?
-        for event in pygame.event.get():
+        while program_state["game"]:
 
-            # User press Key?
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
+            # Did the user click the window close button?
+            for event in pygame.event.get():
+
+                # User press Key?
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        program_state["game"] = False
+                        program_state["menu"] = True
+
+                # User press Close Window?
+                elif event.type == QUIT:
                     program_state["game"] = False
-                    program_state["menu"] = True
 
-            # User press Close Window?
-            elif event.type == QUIT:
-                program_state["game"] = False
+                # Add new enemy?
+                elif event.type == ADDENEMY:
+                    new_enemy = Enemy()
+                    enemies.add(new_enemy)
+                    all_sprites.add(new_enemy)
 
-            # Add new enemy?
-            elif event.type == ADDENEMY:
-                new_enemy = Enemy()
-                enemies.add(new_enemy)
-                all_sprites.add(new_enemy)
+                elif event.type == MOUSEBUTTONDOWN:
+                    player.click = True
 
-            elif event.type == MOUSEBUTTONDOWN:
-                player.click = True
+            # get set of pressed keys
+            pressed_keys = pygame.key.get_pressed()
 
-        # get set of pressed keys
-        pressed_keys = pygame.key.get_pressed()
+            # update player
+            player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-        # update player
-        player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT)
+            # update enemies
+            enemies.update(player)
 
-        # update enemies
-        enemies.update(player)
+            # Check if player has collected a colorbox
+            if pygame.sprite.spritecollideany(player, boxes):
+                randomBox.move()
+                # bg_color = random.choice(bg_lib)
+                bg_color = (random.randint(190, 255), random.randint(190, 255), random.randint(190, 255))
 
-        # Check if player has collected a colorbox
-        if pygame.sprite.spritecollideany(player, boxes):
-            randomBox.move()
-            # bg_color = random.choice(bg_lib)
-            bg_color = (random.randint(190, 255), random.randint(190, 255), random.randint(190, 255))
+            # Set Background Color
+            screen.fill(bg_color)
 
-        # Set Background Color
-        screen.fill(bg_color)
+            # Draw all entities
+            for entity in all_sprites:
+                screen.blit(entity.image, entity.rect)
 
-        # Draw all entities
-        for entity in all_sprites:
-            screen.blit(entity.image, entity.rect)
+            # Check if any enemies has collided with player
+            if pygame.sprite.spritecollideany(player, enemies):
+                player.kill()
+                player.alive = False
+            #     prog_state["game"] = False
+            #     prog_state["menu"] = True
 
-        # Check if any enemies has collided with player
-        if pygame.sprite.spritecollideany(player, enemies):
-            player.kill()
-            player.alive = False
-        #     game_running = False
+            # Flip the display
+            pygame.display.flip()
 
-        # Flip the display
-        pygame.display.flip()
-
-        # Ensure program maintains 30 FPS
-        clock.tick(120)
+            # Ensure program maintains 30 FPS
+            clock.tick(120)
 
 # Done! Time to quit.
 pygame.quit()
