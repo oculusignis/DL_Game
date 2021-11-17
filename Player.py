@@ -17,25 +17,37 @@ from pygame.locals import (
 class Player(pygame.sprite.Sprite):
     """Player Object, controlled by WASD and SPACE"""
 
-    def __init__(self, mult):
+    def __init__(self, mult, screen: pygame.display):
         """Initialize Player with the scaling Multiplier"""
         super().__init__()
+        self.screen = screen
         self.size_multiplier = mult
+        self.click = False
+        self.alive = 1
         self.xy_change = [0, 0]
-        self.orientation = 'idle'
-        self.orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4}
         self.base_speed = 4
+        self.orientation = 'idle'
+        self.orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
         self.spritenumber = {"ticks": 0, "move": 0}
         self.dashing = False
         self.dash_counter = 500
         self.attack_counter = 0
-        self.click = False
-        self.alive = True
-        self.ss = SpriteSheet('resources/Sam52.png')
+        self.ss = SpriteSheet('resources/Sam6.png')
         self.image = self.getspriteimage()
-        # define color that should be transparent
-        # self.image.set_colorkey((255, 255, 254), RLEACCEL)
         self.rect = self.image.get_bounding_rect()
+        self.move((self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8))
+
+    def reset(self):
+        self.alive = 1
+        self.xy_change = [0, 0]
+        self.orientation = 'idle'
+        self.spritenumber = {"ticks": 0, "move": 0}
+        self.dashing = False
+        self.dash_counter = 500
+        self.attack_counter = 0
+        self.move((self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8))
+        self.dashing = False
+        self.attack_counter = 0
 
     def getspriteimage(self):
         """produces a pygame image from the spritesheet"""
@@ -104,6 +116,7 @@ class Player(pygame.sprite.Sprite):
                 self.spritenumber["move"] = (self.spritenumber["move"] + 1) % factor
         else:
             self.spritenumber["move"] = 0
+            self.spritenumber["ticks"] = 0
 
         # Sprite move and number determined, get the image
         self.image = self.getspriteimage()
@@ -118,24 +131,41 @@ class Player(pygame.sprite.Sprite):
         speed = 2.5 * self.base_speed   # dash speed
         self.rect.move_ip(self.xy_change[0] * speed, self.xy_change[1] * speed)
 
+    def death(self):
+        """death animation"""
+        if self.spritenumber["move"] < 3:
+            self.spritenumber["ticks"] += 1
+            factor = 4
+            if self.spritenumber["ticks"] > 120 / factor:
+                self.spritenumber["ticks"] = 0
+                self.spritenumber["move"] = (self.spritenumber["move"] + 1) % factor
+        else:
+            self.spritenumber["ticks"] = 0
+            self.alive = -1
+        self.image = self.getspriteimage()
+
     def update(self, press_k, screenw: int, screenh: int):
         """update Player sprite"""
+        if self.alive > 0:
+            # dash or (walk and charge dash)?
+            dashable = all((press_k[K_SPACE], self.dash_counter == 1000, self.orientation != "idle"))
+            if self.dashing or dashable:
+                self.dash()
+            else:
+                self.walk(press_k)
+                if self.dash_counter < 1000:
+                    self.dash_counter += 1
 
-        # dash or (walk and charge dash)?
-        dashable = all((press_k[K_SPACE], self.dash_counter == 1000, self.orientation != "idle"))
-        if self.dashing or dashable:
-            self.dash()
-        else:
-            self.walk(press_k)
-            if self.dash_counter < 1000:
-                self.dash_counter += 1
+            # keep player in screen
+            if self.rect.left < 0:
+                self.rect.left = 0
+            if self.rect.right > screenw:
+                self.rect.right = screenw
+            if self.rect.top < 0:
+                self.rect.top = 0
+            if self.rect.bottom > screenh:
+                self.rect.bottom = screenh
 
-        # keep player in screen
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > screenw:
-            self.rect.right = screenw
-        if self.rect.top < 0:
-            self.rect.top = 0
-        if self.rect.bottom > screenh:
-            self.rect.bottom = screenh
+        elif self.alive == 0:
+            self.orientation = 'death'
+            self.death()

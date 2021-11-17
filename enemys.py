@@ -14,6 +14,9 @@ class Enemy1(pygame.sprite.Sprite):
         self.following = None
         self.speed = 2.5
 
+    def reset(self):
+        self.rect.topleft = (0, 0)
+
     def update(self, player):
 
         # TODO calculate distance from ALL Players and follow closest one

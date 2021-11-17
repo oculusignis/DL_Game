@@ -5,7 +5,7 @@ import pygame
 
 from Player import Player
 from colorbox import ColorBox
-from menuScreen import Menu
+from menuScreen import Menu, DeathMenu
 import enemys
 from pygame.locals import (
     RLEACCEL,
@@ -49,6 +49,10 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
 
 
+def game_reset():
+    pass
+
+
 pygame.init()
 
 # fullscreen
@@ -57,7 +61,8 @@ SCREEN_WIDTH = window_info.current_w
 SCREEN_HEIGHT = window_info.current_h
 
 # Set up the drawing window
-screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+# screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+screen = pygame.display.set_mode((0, 0))
 
 # Create custom event for adding new enemy and cloud
 ADDENEMY = pygame.USEREVENT + 1
@@ -71,8 +76,7 @@ boxes = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 
 # Instantiate Player
-player = Player(size_multiplier)
-player.move((SCREEN_WIDTH / 2, SCREEN_HEIGHT - SCREEN_HEIGHT / 8))
+player = Player(size_multiplier, screen)
 all_sprites.add(player)
 
 # Instantiate Colorbox
@@ -99,7 +103,7 @@ program_state = {"menu": True, "game": False}
 while any(program_state.values()):
     # run menu loop
     if program_state["menu"]:
-        menu.menu_loop(program_state)
+        menu.loop(program_state)
 
     # run game loop
     if program_state["game"]:
@@ -154,10 +158,14 @@ while any(program_state.values()):
 
             # Check if any enemies has collided with player
             if pygame.sprite.spritecollideany(player, enemies):
-                player.kill()
-                player.alive = False
+                player.alive = 0
+                DeathMenu((screen, size_multiplier))
+
             #     prog_state["game"] = False
             #     prog_state["menu"] = True
+
+            if player.alive < 0:
+                pass
 
             # Flip the display
             pygame.display.flip()
