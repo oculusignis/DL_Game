@@ -97,34 +97,31 @@ running = True
 game_running = False
 menu_running = True
 menu = Menu(screen, size_multiplier)
-program_state = {"menu": True, "game": False}
+program_state = "menu"
 
 # Window loop
-while any(program_state.values()):
+while program_state != "quit":
     # run menu loop
-    if program_state["menu"]:
-        menu.loop(program_state)
+    print(program_state)
+    if program_state == "menu":
+        program_state = menu.loop(program_state)
 
     # run game loop
-    if program_state["game"]:
+    if program_state == "game":
         # initiate specific vars
         bg_color = light_blue
 
-        while program_state["game"]:
+        while program_state == "game":
 
             # Did the user click the window close button?
             for event in pygame.event.get():
-
                 # User press Key?
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
-                        program_state["game"] = False
-                        program_state["menu"] = True
-
+                        program_state = "menu"
                 # User press Close Window?
                 elif event.type == QUIT:
-                    program_state["game"] = False
-
+                    program_state = "quit"
                 # Add new enemy?
                 elif event.type == ADDENEMY:
                     new_enemy = Enemy()
@@ -147,7 +144,7 @@ while any(program_state.values()):
             if pygame.sprite.spritecollideany(player, boxes):
                 randomBox.move()
                 # bg_color = random.choice(bg_lib)
-                bg_color = (random.randint(190, 255), random.randint(190, 255), random.randint(190, 255))
+                bg_color = (random.randint(170, 250), random.randint(170, 250), random.randint(170, 250))
 
             # Set Background Color
             screen.fill(bg_color)
@@ -156,10 +153,17 @@ while any(program_state.values()):
             for entity in all_sprites:
                 screen.blit(entity.image, entity.rect)
 
-            # Check if any enemies has collided with player
-            if pygame.sprite.spritecollideany(player, enemies):
-                player.alive = 0
-                DeathMenu((screen, size_multiplier))
+            if player.alive > 0:
+                # Check if any enemies has collided with player
+                if pygame.sprite.spritecollideany(player, enemies):
+                    player.alive = 0
+            elif player.alive < 0:
+                dm = DeathMenu((screen, size_multiplier))
+                program_state = dm.loop()
+                # reset game
+                player.reset()
+                enemy.reset()
+                randomBox.move()
 
             #     prog_state["game"] = False
             #     prog_state["menu"] = True

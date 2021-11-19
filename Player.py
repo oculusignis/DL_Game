@@ -30,7 +30,7 @@ class Player(pygame.sprite.Sprite):
         self.orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
         self.spritenumber = {"ticks": 0, "move": 0}
         self.dashing = False
-        self.dash_counter = 500
+        self.dash_counter = 1000
         self.attack_counter = 0
         self.ss = SpriteSheet('resources/Sam6.png')
         self.image = self.getspriteimage()
@@ -43,7 +43,7 @@ class Player(pygame.sprite.Sprite):
         self.orientation = 'idle'
         self.spritenumber = {"ticks": 0, "move": 0}
         self.dashing = False
-        self.dash_counter = 500
+        self.dash_counter = 1000
         self.attack_counter = 0
         self.move((self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8))
         self.dashing = False
@@ -66,7 +66,6 @@ class Player(pygame.sprite.Sprite):
 
     def walk(self, press_k):
         """normal walk animation"""
-
         # clear variables
         self.xy_change = [0, 0]
 

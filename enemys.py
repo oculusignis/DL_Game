@@ -20,7 +20,7 @@ class Enemy1(pygame.sprite.Sprite):
     def update(self, player):
 
         # TODO calculate distance from ALL Players and follow closest one
-        if player.alive:
+        if player.alive > 0:
             vector = pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
                                          player.rect.centery - self.rect.centery)
 
