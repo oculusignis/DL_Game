@@ -29,7 +29,7 @@ class Menu:
         for button in self.buttons:
             button.update(self.active)
 
-    def loop(self, program_state):
+    def loop(self):
         """runs the menu"""
         menu_color = (0xeb, 0xd2, 0xbe)
         while True:
@@ -44,10 +44,10 @@ class Menu:
                         if self.states[self.active] == "play":
                             return "game"
                         elif self.states[self.active] == "settings":
-                            self.settings.loop()
+                            if self.settings.loop() == "quit":
+                                return "quit"
                         elif self.states[self.active] == "exit":
                             return "quit"
-                            return
                 elif event.type == QUIT:
                     return "quit"
 
@@ -98,7 +98,7 @@ class SettingsMenu:
             for event in events:
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
-                        return
+                        return "menu"
                     if event.key == K_SPACE:
                         self.active.update(1)
                     if event.key == K_d:
@@ -107,6 +107,8 @@ class SettingsMenu:
                         self.active.update(-1)
                     elif event.type == QUIT:
                         return
+                if event.type == QUIT:
+                    return "quit"
 
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
@@ -124,11 +126,10 @@ class SettingsButton(pygame.sprite.Sprite):
         self.highlight = highlight
         self.setting = 0
         self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        # TODO get image depending on button number
         self.image = pygame.transform.scale(self.ss.image_at((self.setting * 32, 80 + highlight * 32, 32, 32), -1),
                                             self.size_multiplied)
-        self.rect = self.image.get_rect(
-            center=(50, 50)  # TODO relative coordinates
-        )
+        self.rect = self.image.get_rect(center=(screenw*3/8 + button_number*screenw/8, screenh*3/5))
 
     def update(self, increment):
         self.setting = (self.setting + increment) % 2
@@ -136,9 +137,6 @@ class SettingsButton(pygame.sprite.Sprite):
                                             self.size_multiplied)
 
 
-# TODO show menu on some kind of surface or display
-# TODO loop function
-# TODO change code in main
 class DeathMenu:
     """menu shown when player dies"""
     def __init__(self, window_stats: (pygame.display, int)):
@@ -153,12 +151,13 @@ class DeathMenu:
         old_game = self.screen.copy()
         center = old_game.get_rect().center
         width, height = old_game.get_size()
+        # opaque surface preparation
         opaque_surf = pygame.Surface(old_game.get_size()).convert_alpha()
-        opaque_surf.set_alpha(20)
+        opaque_surf.set_alpha(1)
         opaque_surf.fill((40, 40, 40))
         # put decreasing sized opaque layers on old_game
-        for rel_width in np.linspace(1, 0.3, 5):
-            opaque_surf = pygame.transform.scale(opaque_surf, (int(width * rel_width), height)).convert_alpha()
+        for rel_width in np.linspace(0.3, 0.8, 40):
+            opaque_surf = pygame.transform.scale(opaque_surf, (int(width * rel_width), height))
             opaque_rect = opaque_surf.get_rect(center=center)
             old_game.blit(opaque_surf, opaque_rect)
         return old_game
@@ -192,11 +191,9 @@ class DeathMenu:
             self.screen.blit(self.playB.image, self.playB.rect)
             self.screen.blit(self.homeB.image, self.homeB.rect)
 
-            # TODO death buttons, sprite and function
             pygame.display.flip()
 
 
-# TODO update funtion
 class DeathButton(pygame.sprite.Sprite):
     """Sprite and state of death menu button"""
     def __init__(self, button_number, highlight, window_stats):

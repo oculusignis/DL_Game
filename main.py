@@ -102,9 +102,8 @@ program_state = "menu"
 # Window loop
 while program_state != "quit":
     # run menu loop
-    print(program_state)
     if program_state == "menu":
-        program_state = menu.loop(program_state)
+        program_state = menu.loop()
 
     # run game loop
     if program_state == "game":
@@ -157,7 +156,10 @@ while program_state != "quit":
                 # Check if any enemies has collided with player
                 if pygame.sprite.spritecollideany(player, enemies):
                     player.alive = 0
+                    player.spritenumber["ticks"] = 0
+                    player.spritenumber["move"] = 0
             elif player.alive < 0:
+                # player dead -> DeathMenu -> reset game
                 dm = DeathMenu((screen, size_multiplier))
                 program_state = dm.loop()
                 # reset game
