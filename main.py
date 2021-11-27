@@ -5,7 +5,7 @@ import pygame
 
 from Player import Player
 from colorbox import ColorBox
-from menuScreen import Menu, DeathMenu
+from menus import MainMenu, DeathMenu
 import enemys
 from pygame.locals import (
     RLEACCEL,
@@ -15,8 +15,6 @@ from pygame.locals import (
     MOUSEBUTTONDOWN
 )
 
-# vars
-size_multiplier = 3
 # SCREEN_WIDTH = 600
 # SCREEN_HEIGHT = 600
 better_black = (39, 41, 50)
@@ -64,6 +62,9 @@ SCREEN_HEIGHT = window_info.current_h
 # screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 screen = pygame.display.set_mode((0, 0))
 
+# calculate relative to screenw
+size_multiplier = int((screen.get_width() + screen.get_height()) / 1000)
+
 # Create custom event for adding new enemy and cloud
 ADDENEMY = pygame.USEREVENT + 1
 # pygame.time.set_timer(ADDENEMY, 250)
@@ -96,14 +97,14 @@ clock = pygame.time.Clock()
 running = True
 game_running = False
 menu_running = True
-menu = Menu(screen, size_multiplier)
-program_state = "menu"
+main_menu = MainMenu(screen, size_multiplier)
+program_state = "main_menu"
 
 # Window loop
 while program_state != "quit":
-    # run menu loop
-    if program_state == "menu":
-        program_state = menu.loop()
+    # run main_menu loop
+    if program_state == "main_menu":
+        program_state = main_menu.loop()
 
     # run game loop
     if program_state == "game":
@@ -117,7 +118,7 @@ while program_state != "quit":
                 # User press Key?
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
-                        program_state = "menu"
+                        program_state = "main_menu"
                 # User press Close Window?
                 elif event.type == QUIT:
                     program_state = "quit"
@@ -168,7 +169,7 @@ while program_state != "quit":
                 randomBox.move()
 
             #     prog_state["game"] = False
-            #     prog_state["menu"] = True
+            #     prog_state["main_menu"] = True
 
             if player.alive < 0:
                 pass
@@ -176,7 +177,7 @@ while program_state != "quit":
             # Flip the display
             pygame.display.flip()
 
-            # Ensure program maintains 30 FPS
+            # Ensure program maintains 120 FPS
             clock.tick(120)
 
 # Done! Time to quit.

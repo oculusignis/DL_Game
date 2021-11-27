@@ -1,21 +1,24 @@
 import pygame
 import numpy as np
 import spriteSheet
-from pygame.locals import (K_a, K_d, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
+from pygame.locals import (K_a, K_d, K_s, K_w, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
+
+clock = pygame.time.Clock()
 
 
-class Menu:
+class MainMenu:
     """manages menu_running buttons and their states"""
-    def __init__(self, screen, sizer: int):
+    def __init__(self, screen: pygame.Surface, sizer: int):
         self.active = 0
         self.states = {0: "play", 1: "settings", 2: "exit"}
         window_stats = (screen.get_width(), screen.get_height(), sizer)
-        play_button = MenuButton(0, 1, window_stats)
-        setting_button = MenuButton(1, 0, window_stats)
-        exit_button = MenuButton(2, 0, window_stats)
+        self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        play_button = MainButton(0, 1, window_stats, self.ss)
+        setting_button = MainButton(1, 0, window_stats, self.ss)
+        exit_button = MainButton(2, 0, window_stats, self.ss)
         self.buttons = (play_button, setting_button, exit_button)
         self.screen = screen
-        self.settings = SettingsMenu(screen, window_stats)
+        self.settings = SettingsMenu(screen, sizer, self.ss)
 
     def update(self, events):
         """update Buttons"""
@@ -30,7 +33,7 @@ class Menu:
             button.update(self.active)
 
     def loop(self):
-        """runs the menu"""
+        """runs the main_menu"""
         menu_color = (0xeb, 0xd2, 0xbe)
         while True:
             self.screen.fill(menu_color)
@@ -55,17 +58,18 @@ class Menu:
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
             pygame.display.flip()
+            clock.tick(120)
 
 
-class MenuButton(pygame.sprite.Sprite):
+class MainButton(pygame.sprite.Sprite):
     """Sprite and state of a menu_running button"""
 
-    def __init__(self, button_number, highlight, window_stats):
-        super(MenuButton, self).__init__()
+    def __init__(self, button_number, highlight, window_stats, ss: spriteSheet.SpriteSheet):
+        super(MainButton, self).__init__()
         screenw, screenh, self.size_multiplier = window_stats
         self.b_number = button_number
         self.highlight = highlight
-        self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        self.ss = ss
         self.image = pygame.transform.scale(self.ss.image_at((button_number * 56, highlight * 40, 56, 40), -1),
                                             (56 * self.size_multiplier, 40 * self.size_multiplier))
         self.rect = self.image.get_rect(
@@ -82,64 +86,100 @@ class MenuButton(pygame.sprite.Sprite):
 
 
 class SettingsMenu:
-    def __init__(self, screen: pygame.display, window_stats):
+    def __init__(self, screen: pygame.Surface, sizer, ss: spriteSheet.SpriteSheet):
+        # variables
         self.screen = screen
-        self.visionB = SettingsButton(0, 1, window_stats)
-        self.buttons = [self.visionB]
+        self.screenw = screen.get_width()
+        self.screenh = screen.get_height()
+        self.sizer = sizer
+        # init buttons
+        self.visionB = SettingButton(0, 1, self.screenw, self.screenh, self.sizer, ss)
+        self.enemyB = SettingButton(1, 0, self.screenw, self.screenh, self.sizer, ss)
+        self.cB = SettingButton(2, 0, self.screenw, self.screenh, self.sizer, ss)
+        self.dB = SettingButton(3, 0, self.screenw, self.screenh, self.sizer, ss)
+        self.buttons = [self.visionB, self.enemyB, self.cB, self.dB]
         self.active = self.visionB
+        # settings bar
+        self.bg = self.screen.copy()
+        self.bg.fill((0xeb, 0xd2, 0xbe))
+        bar_dim = (int(self.screenw/4), sizer*8)
+        bar = pygame.transform.scale(ss.image_at((136, 88, 8, 8), (255, 255, 255)), bar_dim)
+        spot = pygame.transform.scale(ss.image_at((152, 88, 10, 10), -1), (sizer*10, sizer*10))
+        for i in range(4):
+            bar_rect = bar.get_rect(center=(self.screenw/2, (3+i)/8*self.screenh))
+            self.bg.blit(bar, bar_rect)
+            for k in range(3):
+                spotr = spot.get_rect(center=((3+k)/8 * self.screenw, (3+i)/8*self.screenh))
+                self.bg.blit(spot, spotr)
 
     def loop(self):
-        """runs the menu"""
-        menu_color = (0xeb, 0xd2, 0xbe)
+        """runs the main_menu"""
         while True:
-            self.screen.fill(menu_color)
-
             events = pygame.event.get()
             for event in events:
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
-                        return "menu"
+                        return "main_menu"
                     if event.key == K_SPACE:
                         self.active.update(1)
                     if event.key == K_d:
                         self.active.update(1)
                     if event.key == K_a:
                         self.active.update(-1)
+                    if event.key == K_s:
+                        self.active.toggle()
+                        self.active = self.buttons[(self.buttons.index(self.active) + 1) % 4]
+                        self.active.toggle()
+                    if event.key == K_w:
+                        self.active.toggle()
+                        self.active = self.buttons[(self.buttons.index(self.active) - 1) % 4]
+                        self.active.toggle()
                     elif event.type == QUIT:
                         return
                 if event.type == QUIT:
                     return "quit"
 
+            self.screen.blit(self.bg, self.bg.get_rect())
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
             pygame.display.flip()
+            clock.tick(120)
 
 
-class SettingsButton(pygame.sprite.Sprite):
+class SettingButton(pygame.sprite.Sprite):
     """Sprite and state of a Settings Button"""
 
-    def __init__(self, button_number, highlight, window_stats):
-        super(SettingsButton, self).__init__()
-        screenw, screenh, self.size_multiplier = window_stats
-        self.size_multiplied = (32 * self.size_multiplier, 32 * self.size_multiplier)
+    def __init__(self, button_number, highlight, screenw, screenh, sizer, ss: spriteSheet.SpriteSheet):
+        super(SettingButton, self).__init__()
+        self.screenw = screenw
+        self.screenh = screenh
+        self.sizer = sizer
+        self.ss = ss
+        self.size_multiplied = (32 * self.sizer, 32 * self.sizer)
         self.b_number = button_number
         self.highlight = highlight
         self.setting = 0
-        self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
-        # TODO get image depending on button number
-        self.image = pygame.transform.scale(self.ss.image_at((self.setting * 32, 80 + highlight * 32, 32, 32), -1),
+        self.image = pygame.transform.scale(self.ss.image_at((self.b_number*32, 80+highlight*32, 32, 32), -1),
                                             self.size_multiplied)
-        self.rect = self.image.get_rect(center=(screenw*3/8 + button_number*screenw/8, screenh*3/5))
+        self.rect = self.image.get_rect(center=((3 + self.setting)/8*screenw, (3 + button_number)/8*screenh))
 
     def update(self, increment):
-        self.setting = (self.setting + increment) % 2
-        self.image = pygame.transform.scale(self.ss.image_at((self.setting * 32, 80 + self.highlight * 32, 32, 32), -1),
+        self.setting = (self.setting + increment)
+        if self.setting < 0:
+            self.setting = 0
+        elif self.setting > 2:
+            self.setting = 2
+        self.rect = self.image.get_rect(center=((3 + self.setting)/8*self.screenw, (3 + self.b_number)/8*self.screenh))
+
+    def toggle(self):
+        self.highlight = (self.highlight + 1) % 2
+        self.image = pygame.transform.scale(self.ss.image_at((self.b_number*32, 80+self.highlight*32, 32, 32), -1),
                                             self.size_multiplied)
 
 
 class DeathMenu:
-    """menu shown when player dies"""
-    def __init__(self, window_stats: (pygame.display, int)):
+    """main_menu shown when player dies"""
+    def __init__(self, window_stats: (pygame.Surface, int)):
         self.screen, self.sizer = window_stats
         self.test, x = window_stats
         self.playB = DeathButton(0, True, window_stats)
@@ -147,7 +187,7 @@ class DeathMenu:
 
     def get_background(self):
         """returns old game state with opaque layers on top as a Surface"""
-        # copy of game_screen for menu background
+        # copy of game_screen for main_menu background
         old_game = self.screen.copy()
         center = old_game.get_rect().center
         width, height = old_game.get_size()
@@ -172,7 +212,7 @@ class DeathMenu:
             for event in events:
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
-                        return "menu"
+                        return "main_menu"
                     if event.key == K_a or event.key == K_d:
                         self.playB.update()
                         self.homeB.update()
@@ -180,7 +220,7 @@ class DeathMenu:
                         if self.playB.highlight:
                             return "game"
                         else:
-                            return "menu"
+                            return "main_menu"
                 # quitting the program
                 elif event.type == QUIT:
                     return "quit"
@@ -192,10 +232,11 @@ class DeathMenu:
             self.screen.blit(self.homeB.image, self.homeB.rect)
 
             pygame.display.flip()
+            clock.tick(120)
 
 
 class DeathButton(pygame.sprite.Sprite):
-    """Sprite and state of death menu button"""
+    """Sprite and state of death main_menu button"""
     def __init__(self, button_number, highlight, window_stats):
         super(DeathButton, self).__init__()
         self.bn = button_number
