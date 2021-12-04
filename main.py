@@ -1,12 +1,8 @@
 # Simple pygame program
 # Import and initialize the pygame library
-import random
 import pygame
-
-from Player import Player
-from colorbox import ColorBox
-from menus import MainMenu, DeathMenu
-import enemys
+import random
+import time
 from pygame.locals import (
     RLEACCEL,
     K_ESCAPE,
@@ -14,6 +10,11 @@ from pygame.locals import (
     QUIT,
     MOUSEBUTTONDOWN
 )
+
+import enemys
+from Player import Player
+from colorbox import ColorBox
+from menus import MainMenu, DeathMenu
 
 # SCREEN_WIDTH = 600
 # SCREEN_HEIGHT = 600
@@ -57,6 +58,8 @@ pygame.init()
 window_info = pygame.display.Info()
 SCREEN_WIDTH = window_info.current_w
 SCREEN_HEIGHT = window_info.current_h
+# TODO make it setting
+framerate = 120
 
 # Set up the drawing window
 # screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -77,7 +80,7 @@ boxes = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 
 # Instantiate Player
-player = Player(size_multiplier, screen)
+player = Player(size_multiplier, screen, framerate)
 all_sprites.add(player)
 
 # Instantiate Colorbox
@@ -86,7 +89,7 @@ boxes.add(randomBox)
 all_sprites.add(randomBox)
 
 # Instantiate Enemy
-enemy = enemys.Enemy1(3)
+enemy = enemys.Enemy1(size_multiplier)
 enemies.add(enemy)
 all_sprites.add(enemy)
 
@@ -110,8 +113,12 @@ while program_state != "quit":
     if program_state == "game":
         # initiate specific vars
         bg_color = light_blue
+        last_time = time.time()
 
         while program_state == "game":
+            # time passed since last frame
+            dt = (time.time() - last_time) * framerate
+            last_time = time.time()
 
             # Did the user click the window close button?
             for event in pygame.event.get():
@@ -135,10 +142,10 @@ while program_state != "quit":
             pressed_keys = pygame.key.get_pressed()
 
             # update player
-            player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT)
+            player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
 
             # update enemies
-            enemies.update(player)
+            enemies.update(player, dt)
 
             # Check if player has collected a colorbox
             if pygame.sprite.spritecollideany(player, boxes):
@@ -153,13 +160,12 @@ while program_state != "quit":
             for entity in all_sprites:
                 screen.blit(entity.image, entity.rect)
 
-            if player.alive > 0:
+            if player.status["alive"] > 0:
                 # Check if any enemies has collided with player
                 if pygame.sprite.spritecollideany(player, enemies):
-                    player.alive = 0
-                    player.spritenumber["ticks"] = 0
-                    player.spritenumber["move"] = 0
-            elif player.alive < 0:
+                    player.status["alive"] = 0
+                    player.move_info["move"] = 0
+            elif player.status["alive"] < 0:
                 # player dead -> DeathMenu -> reset game
                 dm = DeathMenu((screen, size_multiplier))
                 program_state = dm.loop()
@@ -171,14 +177,14 @@ while program_state != "quit":
             #     prog_state["game"] = False
             #     prog_state["main_menu"] = True
 
-            if player.alive < 0:
+            if player.status["alive"] < 0:
                 pass
 
             # Flip the display
             pygame.display.flip()
 
-            # Ensure program maintains 120 FPS
-            clock.tick(120)
+            # Ensure program maintains 60 FPS
+            clock.tick(framerate)
 
 # Done! Time to quit.
 pygame.quit()
