@@ -9,6 +9,7 @@ from pygame.locals import (
     K_d
 )
 
+joystick_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 # TODO dash bar somewhere on the screen
 
 
@@ -59,10 +60,14 @@ class Player(pygame.sprite.Sprite):
         """moves character to loc coordinates"""
         self.rect.center = loc
 
-    def walk(self, press_k, dt):
+    def walk(self, press_k, joystick: pygame.joystick.Joystick, dt):
         """normal walk animation"""
         # clear variables
         self.xy_change = [0, 0]
+
+        axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+
+        self.xy_change = axes
 
         # determine change of coordinates
         if press_k[K_a]:
@@ -140,15 +145,17 @@ class Player(pygame.sprite.Sprite):
         """attack animation"""
         self.move_info["time"] += dt
 
-    def update(self, press_k, screenw: int, screenh: int, dt):
+    def update(self, press_k, joystick: pygame.joystick.Joystick, screenw: int, screenh: int, dt):
         """update Player sprite"""
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
-            startdash = all((press_k[K_SPACE], self.dash_counter == 1000, self.orientation != "idle"))
+            startdash = all((press_k[K_SPACE] or joystick.get_button(joystick_lib["B"]),
+                             self.dash_counter == 1000,
+                             self.orientation != "idle"))
             if self.status["dashing"] or startdash:
                 self.dash(dt)
             else:
-                self.walk(press_k, dt)
+                self.walk(press_k, joystick, dt)
                 if self.dash_counter < 1000:
                     self.dash_counter += 1
 

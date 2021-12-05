@@ -2,6 +2,9 @@ import pygame
 import numpy as np
 import spriteSheet
 from pygame.locals import (K_a, K_d, K_s, K_w, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
+import time
+
+joystick_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
 clock = pygame.time.Clock()
 
@@ -19,9 +22,11 @@ class MainMenu:
         self.buttons = (play_button, setting_button, exit_button)
         self.screen = screen
         self.settings = SettingsMenu(screen, sizer, self.ss)
+        self.axis = 0
 
-    def update(self, events):
+    def update(self, events, joystick):
         """update Buttons"""
+
         for event in events:
             if event.type == KEYDOWN:
                 if event.key == K_a:
@@ -29,10 +34,15 @@ class MainMenu:
                 if event.key == K_d:
                     self.active = (self.active + 1) % 3
 
+        axis = round(joystick.get_axis(0))
+        if self.axis != axis:
+            self.axis = axis
+            self.active = (self.active + axis) % 3
+
         for button in self.buttons:
             button.update(self.active)
 
-    def loop(self):
+    def loop(self, joystick: pygame.joystick.Joystick):
         """runs the main_menu"""
         menu_color = (0xeb, 0xd2, 0xbe)
         while True:
@@ -47,14 +57,30 @@ class MainMenu:
                         if self.states[self.active] == "play":
                             return "game"
                         elif self.states[self.active] == "settings":
-                            if self.settings.loop() == "quit":
+                            if self.settings.loop(joystick) == "quit":
                                 return "quit"
                         elif self.states[self.active] == "exit":
                             return "quit"
                 elif event.type == QUIT:
                     return "quit"
 
-            self.update(events)
+            # get joystick values
+            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
+
+            if jbuttons[joystick_lib["A"]] or jbuttons[joystick_lib["Select"]]:
+                if self.states[self.active] == "play":
+                    return "game"
+                elif self.states[self.active] == "settings":
+                    if self.settings.loop(joystick) == "quit":
+                        return "quit"
+                elif self.states[self.active] == "exit":
+                    return "quit"
+
+            if jbuttons[joystick_lib["Start"]]:
+                return "game"
+
+            self.update(events, joystick)
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
             pygame.display.flip()
@@ -92,6 +118,7 @@ class SettingsMenu:
         self.screenw = screen.get_width()
         self.screenh = screen.get_height()
         self.sizer = sizer
+        self.axis = 0
         # init buttons
         self.visionB = SettingButton(0, 1, self.screenw, self.screenh, self.sizer, ss)
         self.enemyB = SettingButton(1, 0, self.screenw, self.screenh, self.sizer, ss)
@@ -112,11 +139,21 @@ class SettingsMenu:
                 spotr = spot.get_rect(center=((3+k)/8 * self.screenw, (3+i)/8*self.screenh))
                 self.bg.blit(spot, spotr)
 
-    def loop(self):
+    def loop(self, joystick: pygame.joystick.Joystick):
         """runs the main_menu"""
+        font = pygame.font.Font(pygame.font.get_default_font(), 36)
+        # first drawing
+        self.screen.blit(self.bg, self.bg.get_rect())
+        for button in self.buttons:
+            self.screen.blit(button.image, button.rect)
+        pygame.display.flip()
+        # while "A" is still pressed do nothing
+        while joystick.get_button(joystick_lib["A"]):
+            pygame.event.get()
+            clock.tick(30)
+        old_axes = [0, 0]
         while True:
-            events = pygame.event.get()
-            for event in events:
+            for event in pygame.event.get():
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         return "main_menu"
@@ -139,9 +176,32 @@ class SettingsMenu:
                 if event.type == QUIT:
                     return "quit"
 
+            # get joystick values
+            horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
+
+            if jbuttons[joystick_lib["Start"]]:
+                return "main_menu"
+
+            if horizontal and horizontal != old_axes[0]:
+                self.active.update(horizontal)
+            if vertical and vertical != old_axes[1]:
+                self.active.toggle()
+                self.active = self.buttons[(self.buttons.index(self.active) + vertical) % 4]
+                self.active.toggle()
+
+            # update old_axes
+            old_axes = [horizontal, vertical]
+
             self.screen.blit(self.bg, self.bg.get_rect())
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
+
+            # now print the text
+            text = f"buttons={jbuttons}     axis={[horizontal, vertical]}       oldaxes={old_axes}"
+            text_surface = font.render(text, True, (0, 0, 0))
+            self.screen.blit(text_surface, dest=(0, 0))
+
             pygame.display.flip()
             clock.tick(120)
 
@@ -164,6 +224,7 @@ class SettingButton(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=((3 + self.setting)/8*screenw, (3 + button_number)/8*screenh))
 
     def update(self, increment):
+        """Setting is changed based on increment"""
         self.setting = (self.setting + increment)
         if self.setting < 0:
             self.setting = 0
@@ -172,6 +233,7 @@ class SettingButton(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=((3 + self.setting)/8*self.screenw, (3 + self.b_number)/8*self.screenh))
 
     def toggle(self):
+        """toggle the highlight on the button"""
         self.highlight = (self.highlight + 1) % 2
         self.image = pygame.transform.scale(self.ss.image_at((self.b_number*32, 80+self.highlight*32, 32, 32), -1),
                                             self.size_multiplied)

@@ -27,6 +27,9 @@ light_violet = (204, 194, 225)
 light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
 
+joystick_lib = {0: "X", 1: "A", 2: "B", 3: "Y", 4: "LS", 5: "RS", 6: None, 7: None, 8: "Select", 9: "Start"}
+joystick_lib2 = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+
 
 # Enemy Class extending pygame.sprite.Sprite
 class Enemy(pygame.sprite.Sprite):
@@ -61,9 +64,10 @@ SCREEN_HEIGHT = window_info.current_h
 # TODO make it setting
 framerate = 120
 
-# Set up the drawing window
+# Set up the drawing window and name it
 # screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 screen = pygame.display.set_mode((0, 0))
+pygame.display.set_caption('DL_Game')
 
 # calculate relative to screenw
 size_multiplier = int((screen.get_width() + screen.get_height()) / 1000)
@@ -96,6 +100,11 @@ all_sprites.add(enemy)
 # Setup Clock
 clock = pygame.time.Clock()
 
+# Initialize the joysticks
+pygame.joystick.init()
+joystick = pygame.joystick.Joystick(0)
+font = pygame.font.Font(pygame.font.get_default_font(), 36)
+
 # Run until the user asks to quit
 running = True
 game_running = False
@@ -107,7 +116,7 @@ program_state = "main_menu"
 while program_state != "quit":
     # run main_menu loop
     if program_state == "main_menu":
-        program_state = main_menu.loop()
+        program_state = main_menu.loop(joystick)
 
     # run game loop
     if program_state == "game":
@@ -141,8 +150,14 @@ while program_state != "quit":
             # get set of pressed keys
             pressed_keys = pygame.key.get_pressed()
 
+            # get joystick values
+            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
+
+            # TODO controller start button to call main_menu
+
             # update player
-            player.update(pressed_keys, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
+            player.update(pressed_keys, joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
 
             # update enemies
             enemies.update(player, dt)
@@ -179,6 +194,10 @@ while program_state != "quit":
 
             if player.status["alive"] < 0:
                 pass
+
+            text = f"buttons={jbuttons}     axis={jaxes}"
+            text_surface = font.render(text, True, (0, 0, 0))
+            screen.blit(text_surface, dest=(0, 0))
 
             # Flip the display
             pygame.display.flip()
