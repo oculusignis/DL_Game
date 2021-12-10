@@ -28,7 +28,7 @@ light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
 
 joystick_lib = {0: "X", 1: "A", 2: "B", 3: "Y", 4: "LS", 5: "RS", 6: None, 7: None, 8: "Select", 9: "Start"}
-joystick_lib2 = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
 
 # Enemy Class extending pygame.sprite.Sprite
@@ -70,7 +70,10 @@ screen = pygame.display.set_mode((0, 0))
 pygame.display.set_caption('DL_Game')
 
 # calculate relative to screenw
-size_multiplier = int((screen.get_width() + screen.get_height()) / 1000)
+# TODO make better size multiplier
+# laptop 1536x864 -> 1000
+# size_multiplier = int((screen.get_width() + screen.get_height()) / 1000)
+size_multiplier = 3
 
 # Create custom event for adding new enemy and cloud
 ADDENEMY = pygame.USEREVENT + 1
@@ -112,6 +115,7 @@ menu_running = True
 main_menu = MainMenu(screen, size_multiplier)
 program_state = "main_menu"
 
+
 # Window loop
 while program_state != "quit":
     # run main_menu loop
@@ -123,6 +127,10 @@ while program_state != "quit":
         # initiate specific vars
         bg_color = light_blue
         last_time = time.time()
+
+        while joystick.get_button(js_lib["A"]) or joystick.get_button(js_lib["Start"]):
+            pygame.event.get()
+            clock.tick(20)
 
         while program_state == "game":
             # time passed since last frame

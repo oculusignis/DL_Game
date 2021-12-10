@@ -4,7 +4,7 @@ import spriteSheet
 from pygame.locals import (K_a, K_d, K_s, K_w, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
 import time
 
-joystick_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
 clock = pygame.time.Clock()
 
@@ -68,7 +68,7 @@ class MainMenu:
             jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
-            if jbuttons[joystick_lib["A"]] or jbuttons[joystick_lib["Select"]]:
+            if jbuttons[js_lib["A"]] or jbuttons[js_lib["Select"]]:
                 if self.states[self.active] == "play":
                     return "game"
                 elif self.states[self.active] == "settings":
@@ -77,7 +77,7 @@ class MainMenu:
                 elif self.states[self.active] == "exit":
                     return "quit"
 
-            if jbuttons[joystick_lib["Start"]]:
+            if jbuttons[js_lib["Start"]]:
                 return "game"
 
             self.update(events, joystick)
@@ -148,7 +148,7 @@ class SettingsMenu:
             self.screen.blit(button.image, button.rect)
         pygame.display.flip()
         # while "A" is still pressed do nothing
-        while joystick.get_button(joystick_lib["A"]):
+        while joystick.get_button(js_lib["A"]):
             pygame.event.get()
             clock.tick(30)
         old_axes = [0, 0]
@@ -180,7 +180,10 @@ class SettingsMenu:
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
-            if jbuttons[joystick_lib["Start"]]:
+            if jbuttons[js_lib["Start"]] or jbuttons[js_lib["Y"]]:
+                while joystick.get_button(js_lib["Start"]):
+                    pygame.event.get()
+                    clock.tick(20)
                 return "main_menu"
 
             if horizontal and horizontal != old_axes[0]:
@@ -267,6 +270,7 @@ class DeathMenu:
     def loop(self):
         bg = self.get_background()
         bg_rect = bg.get_rect()
+        joystick = pygame.joystick.Joystick(0)
 
         while True:
             # handle events
@@ -286,6 +290,31 @@ class DeathMenu:
                 # quitting the program
                 elif event.type == QUIT:
                     return "quit"
+
+            # get joystick values
+            horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
+
+            if jbuttons[js_lib["Y"]]:
+                return "main_menu"
+            if jbuttons[js_lib["Start"]]:
+                while joystick.get_button(js_lib["Start"]):
+                    pygame.event.get()
+                    clock.tick(30)
+            if horizontal:
+                while round(joystick.get_axis(0)):
+                    pygame.event.get()
+                    clock.tick(30)
+                self.playB.update()
+                self.homeB.update()
+            if jbuttons[js_lib["A"]]:
+                while joystick.get_button(js_lib["A"]):
+                    pygame.event.get()
+                    clock.tick(30)
+                if self.playB.highlight:
+                    return "game"
+                else:
+                    return "main_menu"
 
             # show game behind tranpsarent surface
             self.screen.blit(bg, bg_rect)
