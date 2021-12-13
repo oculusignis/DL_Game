@@ -45,6 +45,16 @@ class MainMenu:
     def loop(self, joystick: pygame.joystick.Joystick):
         """runs the main_menu"""
         menu_color = (0xeb, 0xd2, 0xbe)
+        # first draw
+        self.screen.fill(menu_color)
+        for button in self.buttons:
+            self.screen.blit(button.image, button.rect)
+        pygame.display.flip()
+        # wait for user to stop pressing start
+        while joystick.get_button(js_lib["Start"]):
+            pygame.event.get()
+            clock.tick(20)
+        # start menu loop
         while True:
             self.screen.fill(menu_color)
 
@@ -268,10 +278,17 @@ class DeathMenu:
         return old_game
 
     def loop(self):
-        bg = self.get_background()
-        bg_rect = bg.get_rect()
         joystick = pygame.joystick.Joystick(0)
 
+        # draw death menu for the first time
+        bg = self.get_background()
+        bg_rect = bg.get_rect()
+        self.screen.blit(bg, bg_rect)
+        self.screen.blit(self.playB.image, self.playB.rect)
+        self.screen.blit(self.homeB.image, self.homeB.rect)
+        pygame.display.flip()
+
+        # run death menu loop
         while True:
             # handle events
             events = pygame.event.get()
@@ -301,12 +318,18 @@ class DeathMenu:
                 while joystick.get_button(js_lib["Start"]):
                     pygame.event.get()
                     clock.tick(30)
+                return "game"
             if horizontal:
+                self.playB.update()
+                self.homeB.update()
+                # show buttons
+                self.screen.blit(self.playB.image, self.playB.rect)
+                self.screen.blit(self.homeB.image, self.homeB.rect)
+
+                pygame.display.flip()
                 while round(joystick.get_axis(0)):
                     pygame.event.get()
                     clock.tick(30)
-                self.playB.update()
-                self.homeB.update()
             if jbuttons[js_lib["A"]]:
                 while joystick.get_button(js_lib["A"]):
                     pygame.event.get()
@@ -316,13 +339,6 @@ class DeathMenu:
                 else:
                     return "main_menu"
 
-            # show game behind tranpsarent surface
-            self.screen.blit(bg, bg_rect)
-            # show buttons
-            self.screen.blit(self.playB.image, self.playB.rect)
-            self.screen.blit(self.homeB.image, self.homeB.rect)
-
-            pygame.display.flip()
             clock.tick(120)
 
 

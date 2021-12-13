@@ -27,7 +27,6 @@ light_violet = (204, 194, 225)
 light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
 
-joystick_lib = {0: "X", 1: "A", 2: "B", 3: "Y", 4: "LS", 5: "RS", 6: None, 7: None, 8: "Select", 9: "Start"}
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
 
@@ -163,6 +162,8 @@ while program_state != "quit":
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
             # TODO controller start button to call main_menu
+            if jbuttons[js_lib["Start"]]:
+                program_state = "main_menu"
 
             # update player
             player.update(pressed_keys, joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
