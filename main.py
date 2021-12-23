@@ -102,9 +102,12 @@ all_sprites.add(enemy)
 # Setup Clock
 clock = pygame.time.Clock()
 
-# Initialize the joysticks
-pygame.joystick.init()
-joystick = pygame.joystick.Joystick(0)
+try:
+    # Initialize the joysticks
+    pygame.joystick.init()
+    joystick = pygame.joystick.Joystick(0)
+except pygame.error:
+    joystick = None
 font = pygame.font.Font(pygame.font.get_default_font(), 36)
 
 # Run until the user asks to quit
@@ -127,9 +130,10 @@ while program_state != "quit":
         bg_color = light_blue
         last_time = time.time()
 
-        while joystick.get_button(js_lib["A"]) or joystick.get_button(js_lib["Start"]):
-            pygame.event.get()
-            clock.tick(20)
+        if joystick:
+            while joystick.get_button(js_lib["A"]) or joystick.get_button(js_lib["Start"]):
+                pygame.event.get()
+                clock.tick(20)
 
         while program_state == "game":
             # time passed since last frame
@@ -157,13 +161,18 @@ while program_state != "quit":
             # get set of pressed keys
             pressed_keys = pygame.key.get_pressed()
 
-            # get joystick values
-            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-            jbuttons = [joystick.get_button(b) for b in range(10)]
+            if joystick:
+                # get joystick values
+                jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+                jbuttons = [joystick.get_button(b) for b in range(10)]
 
-            # TODO controller start button to call main_menu
-            if jbuttons[js_lib["Start"]]:
-                program_state = "main_menu"
+                # TODO remove after testing
+                text = f"buttons={jbuttons}     axis={jaxes}"
+
+                if jbuttons[js_lib["Start"]]:
+                    program_state = "main_menu"
+            else:
+                text = None
 
             # update player
             player.update(pressed_keys, joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
@@ -172,6 +181,8 @@ while program_state != "quit":
             enemies.update(player, dt)
 
             # Check if player has collected a colorbox
+            if pygame.sprite.spritecollideany(player.sword, boxes):
+                print("Transparent hit")
             if pygame.sprite.spritecollideany(player, boxes):
                 randomBox.move()
                 # bg_color = random.choice(bg_lib)
@@ -192,7 +203,7 @@ while program_state != "quit":
             elif player.status["alive"] < 0:
                 # player dead -> DeathMenu -> reset game
                 dm = DeathMenu((screen, size_multiplier))
-                program_state = dm.loop()
+                program_state = dm.loop(joystick)
                 # reset game
                 player.reset()
                 enemy.reset()
@@ -201,12 +212,9 @@ while program_state != "quit":
             #     prog_state["game"] = False
             #     prog_state["main_menu"] = True
 
-            if player.status["alive"] < 0:
-                pass
-
-            text = f"buttons={jbuttons}     axis={jaxes}"
-            text_surface = font.render(text, True, (0, 0, 0))
-            screen.blit(text_surface, dest=(0, 0))
+            if joystick:
+                text_surface = font.render(text, True, (0, 0, 0))
+                screen.blit(text_surface, dest=(0, 0))
 
             # Flip the display
             pygame.display.flip()

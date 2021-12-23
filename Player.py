@@ -9,8 +9,10 @@ from pygame.locals import (
     K_d
 )
 
+orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
 joystick_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 # TODO dash bar somewhere on the screen
+# TODO health bar
 
 
 # Define player object as extension of pygame.sprite.Sprite
@@ -21,21 +23,29 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, mult, screen: pygame.display, framerate):
         """Initialize Player with the scaling Multiplier"""
         super().__init__()
+        # general game data
         self.screen = screen
         self.size_multiplier = mult
         self.framerate = framerate
+
+        # player attributes
         self.click = False
         self.xy_change = [0, 0]
         self.base_speed = 4
         self.orientation = 'idle'
-        self.orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
         self.move_info = {"time": 0, "move": 0}
         self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}
         self.dash_counter = 1000
+
+        # init image and rect
         self.ss = SpriteSheet('resources/Sam66_22-28.png')
         self.image = self.getspriteimage()
         self.rect = self.image.get_bounding_rect()
-        self.move((self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8))
+        self.center = (self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8)
+        self.move(self.center)
+
+        # init sword
+        self.sword = Sword(self.center, mult)  # TODO sword at player location
 
     def reset(self):
         self.xy_change = [0, 0]
@@ -50,11 +60,11 @@ class Player(pygame.sprite.Sprite):
         sizex = 22
         sizey = 28
         x = self.move_info["move"] * sizex
-        y = self.orientationLib[self.orientation] * sizey
+        y = orientationLib[self.orientation] * sizey
         x = pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),
                                    (sizex*self.size_multiplier, sizey*self.size_multiplier)).convert_alpha()
 
-        return x    # TODO crop rectangle to surface
+        return x
 
     def move(self, loc=(0, 0)):
         """moves character to loc coordinates"""
@@ -65,9 +75,10 @@ class Player(pygame.sprite.Sprite):
         # clear variables
         self.xy_change = [0, 0]
 
-        axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+        if joystick:
+            axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
 
-        self.xy_change = axes
+            self.xy_change = axes
 
         # determine change of coordinates
         if press_k[K_a]:
@@ -149,9 +160,11 @@ class Player(pygame.sprite.Sprite):
         """update Player sprite"""
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
-            startdash = all((press_k[K_SPACE] or joystick.get_button(joystick_lib["B"]),
-                             self.dash_counter == 1000,
-                             self.orientation != "idle"))
+            if joystick:
+                pressed = press_k[K_SPACE] or joystick.get_button(joystick_lib["B"])
+            else:
+                pressed = press_k[K_SPACE]
+            startdash = all((pressed, self.dash_counter == 1000, self.orientation != "idle"))
             if self.status["dashing"] or startdash:
                 self.dash(dt)
             else:
@@ -172,3 +185,36 @@ class Player(pygame.sprite.Sprite):
         elif self.status["alive"] == 0:
             self.orientation = 'death'
             self.death(dt)
+
+
+class Sword(pygame.sprite.Sprite):
+    """handles the rect for the sword hitbox"""
+    def __init__(self, mult):
+        # general data
+        super().__init__()
+        self.mult = mult
+        self.rect = pygame.rect.Rect(-1, -1, 1, 1)
+
+    def reset(self):
+        """puts sword rect outside of screen, so no collisions happen"""
+        self.rect.update(-1, -1, 1, 1)
+
+    def up(self, center):
+        """puts sword rect above the player"""
+        self.rect.size = (42 * self.mult, 10 * self.mult)
+        self.rect.center = (center[0], center[1] + 16 * self.mult)
+
+    def down(self, center):
+        """puts sword rect below the player"""
+        self.rect.size = (42 * self.mult, 10 * self.mult)
+        self.rect.center = (center[0], center[1] - 16 * self.mult)
+
+    def right(self, center):
+        """puts sword rect right of the player"""
+        self.rect.size = (10 * self.mult, 42 * self.mult)
+        self.rect.center = (center[0] + 16, center[1])
+
+    def left(self, center):
+        """puts sword rect left of the player"""
+        self.rect.size = (10 * self.mult, 42 * self.mult)
+        self.rect.center = (center[0] - 16, center[1])
