@@ -1,16 +1,8 @@
 import pygame
 from spriteSheet import SpriteSheet
-from pygame.locals import (
-    # RLEACCEL,
-    K_SPACE,
-    K_w,
-    K_a,
-    K_s,
-    K_d
-)
 
 orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
-joystick_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 # TODO dash bar somewhere on the screen
 # TODO health bar
 
@@ -44,8 +36,9 @@ class Player(pygame.sprite.Sprite):
         self.center = (self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8)
         self.move(self.center)
 
-        # init sword
-        self.sword = Sword(self.center, mult)  # TODO sword at player location
+        # init hitboxes
+        self.hitbox = pygame.rect.Rect(self.center[0] + 11*mult, self.center[1] + 11*mult, 22*mult, 22*mult) # TODO
+        self.sword = Sword(mult)
 
     def reset(self):
         self.xy_change = [0, 0]
@@ -70,25 +63,14 @@ class Player(pygame.sprite.Sprite):
         """moves character to loc coordinates"""
         self.rect.center = loc
 
-    def walk(self, press_k, joystick: pygame.joystick.Joystick, dt):
+    def walk(self, joystick: pygame.joystick.Joystick, dt):
         """normal walk animation"""
         # clear variables
         self.xy_change = [0, 0]
 
-        if joystick:
-            axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-
-            self.xy_change = axes
-
         # determine change of coordinates
-        if press_k[K_a]:
-            self.xy_change[0] -= 1
-        if press_k[K_d]:
-            self.xy_change[0] += 1
-        if press_k[K_w]:
-            self.xy_change[1] -= 1
-        if press_k[K_s]:
-            self.xy_change[1] += 1
+        axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+        self.xy_change = axes
 
         # calculate speed
         speed = self.base_speed * dt
@@ -156,19 +138,18 @@ class Player(pygame.sprite.Sprite):
         """attack animation"""
         self.move_info["time"] += dt
 
-    def update(self, press_k, joystick: pygame.joystick.Joystick, screenw: int, screenh: int, dt):
+    def update(self, joystick: pygame.joystick.Joystick, screenw: int, screenh: int, dt):
         """update Player sprite"""
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
-            if joystick:
-                pressed = press_k[K_SPACE] or joystick.get_button(joystick_lib["B"])
-            else:
-                pressed = press_k[K_SPACE]
-            startdash = all((pressed, self.dash_counter == 1000, self.orientation != "idle"))
+            startdash = all((joystick.get_button(js_lib["B"]), self.dash_counter == 1000, self.orientation != "idle"))
+            startattack = all((joystick.get_button(js_lib["A"]), True))  # TODO attack counter instead of True
             if self.status["dashing"] or startdash:
                 self.dash(dt)
+            elif self.status["attacking"] or startattack:
+                self.attack(dt)
             else:
-                self.walk(press_k, joystick, dt)
+                self.walk(joystick, dt)
                 if self.dash_counter < 1000:
                     self.dash_counter += 1
 

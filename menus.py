@@ -1,8 +1,7 @@
 import pygame
 import numpy as np
 import spriteSheet
-from pygame.locals import (K_a, K_d, K_s, K_w, K_ESCAPE, K_SPACE, KEYDOWN, QUIT)
-import time
+from pygame.locals import (QUIT)
 
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
@@ -24,21 +23,13 @@ class MainMenu:
         self.settings = SettingsMenu(screen, sizer, self.ss)
         self.axis = 0
 
-    def update(self, events, joystick):
+    def update(self, joystick):
         """update Buttons"""
 
-        for event in events:
-            if event.type == KEYDOWN:
-                if event.key == K_a:
-                    self.active = (self.active - 1) % 3
-                if event.key == K_d:
-                    self.active = (self.active + 1) % 3
-
-        if joystick:
-            axis = round(joystick.get_axis(0))
-            if self.axis != axis:
-                self.axis = axis
-                self.active = (self.active + axis) % 3
+        axis = round(joystick.get_axis(0))
+        if self.axis != axis:
+            self.axis = axis
+            self.active = (self.active + axis) % 3
 
         for button in self.buttons:
             button.update(self.active)
@@ -52,49 +43,36 @@ class MainMenu:
             self.screen.blit(button.image, button.rect)
         pygame.display.flip()
 
-        if joystick:
-            # wait for user to stop pressing start
-            while joystick.get_button(js_lib["Start"]):
-                pygame.event.get()
-                clock.tick(20)
+        # wait for user to stop pressing start
+        while joystick.get_button(js_lib["Start"]):
+            pygame.event.get()
+            clock.tick(20)
         # start menu loop
         while True:
             self.screen.fill(menu_color)
 
             events = pygame.event.get()
             for event in events:
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        return "quit"
-                    if event.key == K_SPACE:
-                        if self.states[self.active] == "play":
-                            return "game"
-                        elif self.states[self.active] == "settings":
-                            if self.settings.loop(joystick) == "quit":
-                                return "quit"
-                        elif self.states[self.active] == "exit":
-                            return "quit"
-                elif event.type == QUIT:
+                if event.type == QUIT:
                     return "quit"
 
-            if joystick:
-                # get joystick values
-                jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-                jbuttons = [joystick.get_button(b) for b in range(10)]
+            # get joystick values
+            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
 
-                if jbuttons[js_lib["A"]] or jbuttons[js_lib["Select"]]:
-                    if self.states[self.active] == "play":
-                        return "game"
-                    elif self.states[self.active] == "settings":
-                        if self.settings.loop(joystick) == "quit":
-                            return "quit"
-                    elif self.states[self.active] == "exit":
-                        return "quit"
-
-                if jbuttons[js_lib["Start"]]:
+            if jbuttons[js_lib["A"]] or jbuttons[js_lib["Select"]]:
+                if self.states[self.active] == "play":
                     return "game"
+                elif self.states[self.active] == "settings":
+                    if self.settings.loop(joystick) == "quit":
+                        return "quit"
+                elif self.states[self.active] == "exit":
+                    return "quit"
 
-            self.update(events, joystick)
+            if jbuttons[js_lib["Start"]]:
+                return "game"
+
+            self.update(joystick)
             for button in self.buttons:
                 self.screen.blit(button.image, button.rect)
             pygame.display.flip()
@@ -170,51 +148,29 @@ class SettingsMenu:
         old_axes = [0, 0]
         while True:
             for event in pygame.event.get():
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        return "main_menu"
-                    if event.key == K_SPACE:
-                        self.active.update(1)
-                    if event.key == K_d:
-                        self.active.update(1)
-                    if event.key == K_a:
-                        self.active.update(-1)
-                    if event.key == K_s:
-                        self.active.toggle()
-                        self.active = self.buttons[(self.buttons.index(self.active) + 1) % 4]
-                        self.active.toggle()
-                    if event.key == K_w:
-                        self.active.toggle()
-                        self.active = self.buttons[(self.buttons.index(self.active) - 1) % 4]
-                        self.active.toggle()
-                    elif event.type == QUIT:
-                        return
                 if event.type == QUIT:
                     return "quit"
 
-            if joystick:
-                # get joystick values
-                horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-                jbuttons = [joystick.get_button(b) for b in range(10)]
-                text = f"buttons={jbuttons}     axis={[horizontal, vertical]}       oldaxes={old_axes}"
+            # get joystick values
+            horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
+            text = f"buttons={jbuttons}     axis={[horizontal, vertical]}       oldaxes={old_axes}"
 
-                if jbuttons[js_lib["Start"]] or jbuttons[js_lib["Y"]]:
-                    while joystick.get_button(js_lib["Start"]):
-                        pygame.event.get()
-                        clock.tick(20)
-                    return "main_menu"
+            if jbuttons[js_lib["Start"]] or jbuttons[js_lib["Y"]]:
+                while joystick.get_button(js_lib["Start"]):
+                    pygame.event.get()
+                    clock.tick(20)
+                return "main_menu"
 
-                if horizontal and horizontal != old_axes[0]:
-                    self.active.update(horizontal)
-                if vertical and vertical != old_axes[1]:
-                    self.active.toggle()
-                    self.active = self.buttons[(self.buttons.index(self.active) + vertical) % 4]
-                    self.active.toggle()
+            if horizontal and horizontal != old_axes[0]:
+                self.active.update(horizontal)
+            if vertical and vertical != old_axes[1]:
+                self.active.toggle()
+                self.active = self.buttons[(self.buttons.index(self.active) + vertical) % 4]
+                self.active.toggle()
 
-                # update old_axes
-                old_axes = [horizontal, vertical]
-            else:
-                text = None
+            # update old_axes
+            old_axes = [horizontal, vertical]
 
             self.screen.blit(self.bg, self.bg.get_rect())
             for button in self.buttons:
@@ -301,55 +257,39 @@ class DeathMenu:
             # handle events
             events = pygame.event.get()
             for event in events:
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        return "main_menu"
-                    if event.key == K_a or event.key == K_d:
-                        self.playB.update()
-                        self.homeB.update()
-                        # show buttons
-                        self.screen.blit(self.playB.image, self.playB.rect)
-                        self.screen.blit(self.homeB.image, self.homeB.rect)
-                    if event.key == K_SPACE:
-                        if self.playB.highlight:
-                            return "game"
-                        else:
-                            return "main_menu"
-                # quitting the program
-                elif event.type == QUIT:
+                if event.type == QUIT:
                     return "quit"
 
-            if joystick:
-                # get joystick values
-                horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-                jbuttons = [joystick.get_button(b) for b in range(10)]
+            # get joystick values
+            horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
 
-                if jbuttons[js_lib["Y"]]:
-                    return "main_menu"
-                if jbuttons[js_lib["Start"]]:
-                    while joystick.get_button(js_lib["Start"]):
-                        pygame.event.get()
-                        clock.tick(30)
-                    return "game"
-                if horizontal:
-                    self.playB.update()
-                    self.homeB.update()
-                    # show buttons
-                    self.screen.blit(self.playB.image, self.playB.rect)
-                    self.screen.blit(self.homeB.image, self.homeB.rect)
-
-                while round(joystick.get_axis(0)):
+            if jbuttons[js_lib["Y"]]:
+                return "main_menu"
+            if jbuttons[js_lib["Start"]]:
+                while joystick.get_button(js_lib["Start"]):
                     pygame.event.get()
                     clock.tick(30)
+                return "game"
+            if horizontal:
+                self.playB.update()
+                self.homeB.update()
+                # show buttons
+                self.screen.blit(self.playB.image, self.playB.rect)
+                self.screen.blit(self.homeB.image, self.homeB.rect)
 
-                if jbuttons[js_lib["A"]]:
-                    while joystick.get_button(js_lib["A"]):
-                        pygame.event.get()
-                        clock.tick(30)
-                    if self.playB.highlight:
-                        return "game"
-                    else:
-                        return "main_menu"
+            while round(joystick.get_axis(0)):
+                pygame.event.get()
+                clock.tick(30)
+
+            if jbuttons[js_lib["A"]]:
+                while joystick.get_button(js_lib["A"]):
+                    pygame.event.get()
+                    clock.tick(30)
+                if self.playB.highlight:
+                    return "game"
+                else:
+                    return "main_menu"
 
             pygame.display.flip()
             clock.tick(120)

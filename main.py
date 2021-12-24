@@ -5,8 +5,6 @@ import random
 import time
 from pygame.locals import (
     RLEACCEL,
-    K_ESCAPE,
-    KEYDOWN,
     QUIT,
     MOUSEBUTTONDOWN
 )
@@ -143,11 +141,7 @@ while program_state != "quit":
             # Did the user click the window close button?
             for event in pygame.event.get():
                 # User press Key?
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        program_state = "main_menu"
-                # User press Close Window?
-                elif event.type == QUIT:
+                if event.type == QUIT:
                     program_state = "quit"
                 # Add new enemy?
                 elif event.type == ADDENEMY:
@@ -158,24 +152,18 @@ while program_state != "quit":
                 elif event.type == MOUSEBUTTONDOWN:
                     player.click = True
 
-            # get set of pressed keys
-            pressed_keys = pygame.key.get_pressed()
+            # get joystick values
+            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            jbuttons = [joystick.get_button(b) for b in range(10)]
 
-            if joystick:
-                # get joystick values
-                jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-                jbuttons = [joystick.get_button(b) for b in range(10)]
+            # TODO remove after testing
+            text = f"buttons={jbuttons}     axis={jaxes}"
 
-                # TODO remove after testing
-                text = f"buttons={jbuttons}     axis={jaxes}"
-
-                if jbuttons[js_lib["Start"]]:
-                    program_state = "main_menu"
-            else:
-                text = None
+            if jbuttons[js_lib["Start"]]:
+                program_state = "main_menu"
 
             # update player
-            player.update(pressed_keys, joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
+            player.update(joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
 
             # update enemies
             enemies.update(player, dt)
