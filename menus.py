@@ -1,5 +1,7 @@
 import pygame
 import numpy as np
+
+import joystick_handler
 import spriteSheet
 from pygame.locals import (QUIT)
 
@@ -25,7 +27,6 @@ class MainMenu:
 
     def update(self, joystick):
         """update Buttons"""
-
         axis = round(joystick.get_axis(0))
         if self.axis != axis:
             self.axis = axis
@@ -34,9 +35,17 @@ class MainMenu:
         for button in self.buttons:
             button.update(self.active)
 
-    def loop(self, joystick: pygame.joystick.Joystick):
+    def loop(self):
         """runs the main_menu"""
         menu_color = (0xeb, 0xd2, 0xbe)
+
+        # get joystick
+        try:
+            joystick = pygame.joystick.Joystick(0)
+        except pygame.error:
+            joystick_handler.js_connect(self.sizer)
+            joystick = pygame.joystick.Joystick(0)
+
         # first draw
         self.screen.fill(menu_color)
         for button in self.buttons:
@@ -56,8 +65,7 @@ class MainMenu:
                 if event.type == QUIT:
                     return "quit"
 
-            # get joystick values
-            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+            # get js values
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
             if jbuttons[js_lib["A"]] or jbuttons[js_lib["Select"]]:
@@ -151,7 +159,7 @@ class SettingsMenu:
                 if event.type == QUIT:
                     return "quit"
 
-            # get joystick values
+            # get js values
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
             text = f"buttons={jbuttons}     axis={[horizontal, vertical]}       oldaxes={old_axes}"
@@ -219,11 +227,10 @@ class SettingButton(pygame.sprite.Sprite):
 
 class DeathMenu:
     """main_menu shown when player dies"""
-    def __init__(self, window_stats: (pygame.Surface, int)):
-        self.screen, self.sizer = window_stats
-        self.test, x = window_stats
-        self.playB = DeathButton(0, True, window_stats)
-        self.homeB = DeathButton(3, False, window_stats)
+    def __init__(self, screen: pygame.Surface, mult: int):
+        self.screen = screen
+        self.playB = DeathButton(0, True, screen, mult)
+        self.homeB = DeathButton(3, False, screen, mult)
 
     def get_background(self):
         """returns old game state with opaque layers on top as a Surface"""
@@ -260,7 +267,7 @@ class DeathMenu:
                 if event.type == QUIT:
                     return "quit"
 
-            # get joystick values
+            # get js values
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
@@ -297,14 +304,14 @@ class DeathMenu:
 
 class DeathButton(pygame.sprite.Sprite):
     """Sprite and state of death main_menu button"""
-    def __init__(self, button_number, highlight, window_stats):
+    def __init__(self, button_number, highlight, screen: pygame.Surface, mult: int):
         super(DeathButton, self).__init__()
         self.bn = button_number
-        screen, self.size_multiplier = window_stats
+        self.mult = mult
         self.highlight = highlight
         self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
         self.image = pygame.transform.scale(self.ss.image_at((button_number * 56, highlight * 40, 56, 40), -1),
-                                            (56 * self.size_multiplier, 40 * self.size_multiplier))
+                                            (56 * self.mult, 40 * self.mult))
         offset = int(screen.get_width()/16) if button_number > 0 else -int(screen.get_width()/16)
         self.rect = self.image.get_rect(center=(screen.get_width()/2 + offset, screen.get_height() * 3/5))
         self.color = (0, 255, 0) if button_number > 0 else (255, 0, 0)
@@ -313,4 +320,4 @@ class DeathButton(pygame.sprite.Sprite):
         """toggle highlight on button on/off"""
         self.highlight = not self.highlight
         self.image = pygame.transform.scale(self.ss.image_at((self.bn * 56, self.highlight * 40, 56, 40), -1),
-                                            (56 * self.size_multiplier, 40 * self.size_multiplier))
+                                            (56 * self.mult, 40 * self.mult))

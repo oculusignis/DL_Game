@@ -1,10 +1,8 @@
 # Simple pygame program
 # Import and initialize the pygame library
 import pygame
-import random
 import time
 from pygame.locals import (
-    RLEACCEL,
     QUIT,
     MOUSEBUTTONDOWN
 )
@@ -13,9 +11,12 @@ import enemys
 from Player import Player
 from colorbox import ColorBox
 from menus import MainMenu, DeathMenu
+import joystick_handler
+from game import Game
 
 # SCREEN_WIDTH = 600
 # SCREEN_HEIGHT = 600
+
 better_black = (39, 41, 50)
 light_blue = (198, 211, 232)
 light_green = (199, 226, 211)
@@ -26,30 +27,6 @@ light_yellow = (225, 232, 187)
 bg_lib = [light_blue, light_green, light_grey, light_red, light_violet, light_yellow]
 
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
-
-
-# Enemy Class extending pygame.sprite.Sprite
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
-        super(Enemy, self).__init__()
-        self.surf = pygame.image.load("resources/missile.png").convert()
-        self.surf.set_colorkey((247, 247, 247), RLEACCEL)
-        self.rect = self.surf.get_rect(
-            center=(
-                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
-                random.randint(0, SCREEN_HEIGHT)
-            )
-        )
-        self.speed = random.randint(5, 20)
-
-    def update(self):
-        self.rect.move_ip(-self.speed, 0)
-        if self.rect.right < 0:
-            self.kill()
-
-
-def game_reset():
-    pass
 
 
 pygame.init()
@@ -115,7 +92,6 @@ menu_running = True
 main_menu = MainMenu(screen, size_multiplier)
 program_state = "main_menu"
 
-
 # Window loop
 while program_state != "quit":
     # run main_menu loop
@@ -124,91 +100,7 @@ while program_state != "quit":
 
     # run game loop
     if program_state == "game":
-        # initiate specific vars
-        bg_color = light_blue
-        last_time = time.time()
-
-        if joystick:
-            while joystick.get_button(js_lib["A"]) or joystick.get_button(js_lib["Start"]):
-                pygame.event.get()
-                clock.tick(20)
-
-        while program_state == "game":
-            # time passed since last frame
-            dt = (time.time() - last_time) * framerate
-            last_time = time.time()
-
-            # Did the user click the window close button?
-            for event in pygame.event.get():
-                # User press Key?
-                if event.type == QUIT:
-                    program_state = "quit"
-                # Add new enemy?
-                elif event.type == ADDENEMY:
-                    new_enemy = Enemy()
-                    enemies.add(new_enemy)
-                    all_sprites.add(new_enemy)
-
-                elif event.type == MOUSEBUTTONDOWN:
-                    player.click = True
-
-            # get joystick values
-            jaxes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
-            jbuttons = [joystick.get_button(b) for b in range(10)]
-
-            # TODO remove after testing
-            text = f"buttons={jbuttons}     axis={jaxes}"
-
-            if jbuttons[js_lib["Start"]]:
-                program_state = "main_menu"
-
-            # update player
-            player.update(joystick, SCREEN_WIDTH, SCREEN_HEIGHT, dt)
-
-            # update enemies
-            enemies.update(player, dt)
-
-            # Check if player has collected a colorbox
-            if pygame.sprite.spritecollideany(player.sword, boxes):
-                print("Transparent hit")
-            if pygame.sprite.spritecollideany(player, boxes):
-                randomBox.move()
-                # bg_color = random.choice(bg_lib)
-                bg_color = (random.randint(170, 250), random.randint(170, 250), random.randint(170, 250))
-
-            # Set Background Color
-            screen.fill(bg_color)
-
-            # Draw all entities
-            for entity in all_sprites:
-                screen.blit(entity.image, entity.rect)
-
-            if player.status["alive"] > 0:
-                # Check if any enemies has collided with player
-                if pygame.sprite.spritecollideany(player, enemies):
-                    player.status["alive"] = 0
-                    player.move_info["move"] = 0
-            elif player.status["alive"] < 0:
-                # player dead -> DeathMenu -> reset game
-                dm = DeathMenu((screen, size_multiplier))
-                program_state = dm.loop(joystick)
-                # reset game
-                player.reset()
-                enemy.reset()
-                randomBox.move()
-
-            #     prog_state["game"] = False
-            #     prog_state["main_menu"] = True
-
-            if joystick:
-                text_surface = font.render(text, True, (0, 0, 0))
-                screen.blit(text_surface, dest=(0, 0))
-
-            # Flip the display
-            pygame.display.flip()
-
-            # Ensure program maintains 60 FPS
-            clock.tick(framerate)
+        pass
 
 # Done! Time to quit.
 pygame.quit()

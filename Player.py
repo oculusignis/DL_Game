@@ -12,16 +12,16 @@ js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start"
 class Player(pygame.sprite.Sprite):
     """Player Object, controlled by WASD and SPACE"""
 
-    def __init__(self, mult, screen: pygame.display, framerate):
+    def __init__(self, player_number: int, mult: int, screen: pygame.Surface, framerate: int):
         """Initialize Player with the scaling Multiplier"""
         super().__init__()
         # general game data
         self.screen = screen
         self.size_multiplier = mult
         self.framerate = framerate
+        self.js = pygame.joystick.Joystick(player_number)
 
         # player attributes
-        self.click = False
         self.xy_change = [0, 0]
         self.base_speed = 4
         self.orientation = 'idle'
@@ -37,7 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.move(self.center)
 
         # init hitboxes
-        self.hitbox = pygame.rect.Rect(self.center[0] + 11*mult, self.center[1] + 11*mult, 22*mult, 22*mult) # TODO
+        self.hitbox = pygame.rect.Rect(self.center[0] + 11*mult, self.center[1] + 11*mult, 22*mult, 22*mult)  # TODO
         self.sword = Sword(mult)
 
     def reset(self):
@@ -54,22 +54,20 @@ class Player(pygame.sprite.Sprite):
         sizey = 28
         x = self.move_info["move"] * sizex
         y = orientationLib[self.orientation] * sizey
-        x = pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),
-                                   (sizex*self.size_multiplier, sizey*self.size_multiplier)).convert_alpha()
-
-        return x
+        return pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),
+                                      (sizex*self.size_multiplier, sizey*self.size_multiplier)).convert_alpha()
 
     def move(self, loc=(0, 0)):
         """moves character to loc coordinates"""
         self.rect.center = loc
 
-    def walk(self, joystick: pygame.joystick.Joystick, dt):
+    def walk(self, dt):
         """normal walk animation"""
         # clear variables
         self.xy_change = [0, 0]
 
         # determine change of coordinates
-        axes = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
+        axes = [round(self.js.get_axis(0)), round(self.js.get_axis(1))]
         self.xy_change = axes
 
         # calculate speed
@@ -77,12 +75,8 @@ class Player(pygame.sprite.Sprite):
         if self.xy_change[0] != 0 and self.xy_change[1] != 0:
             speed *= 0.9
 
-        # move character
-        if self.click:
-            self.rect.center = pygame.mouse.get_pos()
-            self.click = False
-        else:
-            self.rect.move_ip(self.xy_change[0] * speed, self.xy_change[1] * speed)
+        # move the rect
+        self.rect.move_ip(self.xy_change[0] * speed, self.xy_change[1] * speed)
 
         # Determine Character orientation
         old_orientation = self.orientation
@@ -138,18 +132,19 @@ class Player(pygame.sprite.Sprite):
         """attack animation"""
         self.move_info["time"] += dt
 
-    def update(self, joystick: pygame.joystick.Joystick, screenw: int, screenh: int, dt):
+    def update(self, dt):
         """update Player sprite"""
+        screenw, screenh = self.screen.get_size()
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
-            startdash = all((joystick.get_button(js_lib["B"]), self.dash_counter == 1000, self.orientation != "idle"))
-            startattack = all((joystick.get_button(js_lib["A"]), True))  # TODO attack counter instead of True
+            startdash = all((self.js.get_button(js_lib["B"]), self.dash_counter == 1000, self.orientation != "idle"))
+            startattack = all((self.js.get_button(js_lib["A"]), True))  # TODO attack counter instead of True
             if self.status["dashing"] or startdash:
                 self.dash(dt)
             elif self.status["attacking"] or startattack:
                 self.attack(dt)
             else:
-                self.walk(joystick, dt)
+                self.walk(dt)
                 if self.dash_counter < 1000:
                     self.dash_counter += 1
 
