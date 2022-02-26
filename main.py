@@ -1,6 +1,7 @@
 # Simple pygame program
 # Import and initialize the pygame library
 import pygame
+import config
 import time
 from pygame.locals import (
     QUIT,
@@ -61,11 +62,11 @@ boxes = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 
 # Instantiate Player
-player = Player(size_multiplier, screen, framerate)
+player = Player(0, size_multiplier, screen, framerate)
 all_sprites.add(player)
 
 # Instantiate Colorbox
-randomBox = ColorBox(SCREEN_WIDTH, SCREEN_HEIGHT)
+randomBox = ColorBox(screen)
 boxes.add(randomBox)
 all_sprites.add(randomBox)
 
@@ -89,14 +90,14 @@ font = pygame.font.Font(pygame.font.get_default_font(), 36)
 running = True
 game_running = False
 menu_running = True
-main_menu = MainMenu(screen, size_multiplier)
+main_menu = MainMenu()
 program_state = "main_menu"
 
 # Window loop
 while program_state != "quit":
     # run main_menu loop
     if program_state == "main_menu":
-        program_state = main_menu.loop(joystick)
+        program_state = main_menu.loop()
 
     # run game loop
     if program_state == "game":

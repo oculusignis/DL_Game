@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-
+import config
 import joystick_handler
 import spriteSheet
 from pygame.locals import (QUIT)
@@ -12,17 +12,15 @@ clock = pygame.time.Clock()
 
 class MainMenu:
     """manages menu_running buttons and their states"""
-    def __init__(self, screen: pygame.Surface, sizer: int):
+    def __init__(self):
         self.active = 0
         self.states = {0: "play", 1: "settings", 2: "exit"}
-        window_stats = (screen.get_width(), screen.get_height(), sizer)
-        self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
-        play_button = MainButton(0, 1, window_stats, self.ss)
-        setting_button = MainButton(1, 0, window_stats, self.ss)
-        exit_button = MainButton(2, 0, window_stats, self.ss)
+        ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        play_button = MainButton(0, 1, ss)
+        setting_button = MainButton(1, 0, ss)
+        exit_button = MainButton(2, 0, ss)
         self.buttons = (play_button, setting_button, exit_button)
-        self.screen = screen
-        self.settings = SettingsMenu(screen, sizer, self.ss)
+        self.settings = SettingsMenu(ss)
         self.axis = 0
 
     def update(self, joystick):
@@ -43,13 +41,13 @@ class MainMenu:
         try:
             joystick = pygame.joystick.Joystick(0)
         except pygame.error:
-            joystick_handler.js_connect(self.sizer)
+            joystick_handler.js_noconnect()
             joystick = pygame.joystick.Joystick(0)
 
         # first draw
-        self.screen.fill(menu_color)
+        config.screen.fill(menu_color)
         for button in self.buttons:
-            self.screen.blit(button.image, button.rect)
+            config.screen.blit(button.image, button.rect)
         pygame.display.flip()
 
         # wait for user to stop pressing start
@@ -58,7 +56,7 @@ class MainMenu:
             clock.tick(20)
         # start menu loop
         while True:
-            self.screen.fill(menu_color)
+            config.screen.fill(menu_color)
 
             events = pygame.event.get()
             for event in events:
@@ -82,7 +80,7 @@ class MainMenu:
 
             self.update(joystick)
             for button in self.buttons:
-                self.screen.blit(button.image, button.rect)
+                config.screen.blit(button.image, button.rect)
             pygame.display.flip()
             clock.tick(120)
 
@@ -90,16 +88,15 @@ class MainMenu:
 class MainButton(pygame.sprite.Sprite):
     """Sprite and state of a menu_running button"""
 
-    def __init__(self, button_number, highlight, window_stats, ss: spriteSheet.SpriteSheet):
+    def __init__(self, button_number, highlight, ss: spriteSheet.SpriteSheet):
         super(MainButton, self).__init__()
-        screenw, screenh, self.size_multiplier = window_stats
         self.b_number = button_number
         self.highlight = highlight
         self.ss = ss
         self.image = pygame.transform.scale(self.ss.image_at((button_number * 56, highlight * 40, 56, 40), -1),
-                                            (56 * self.size_multiplier, 40 * self.size_multiplier))
+                                            (56 * config.sizer, 40 * config.sizer))
         self.rect = self.image.get_rect(
-            center=((button_number+3) * screenw / 8, screenh*3/5)
+            center=((button_number+3) * config.screen.get_width() / 8, config.screen.get_height() * 3/5)
         )
 
     def update(self, active, *args, **kwargs) -> None:
@@ -108,44 +105,42 @@ class MainButton(pygame.sprite.Sprite):
         if self.highlight != new_state:
             self.highlight = new_state
             self.image = pygame.transform.scale(self.ss.image_at((self.b_number * 56, self.highlight * 40, 56, 40), -1),
-                                                (56 * self.size_multiplier, 40 * self.size_multiplier))
+                                                (56 * config.sizer, 40 * config.sizer))
 
 
 class SettingsMenu:
-    def __init__(self, screen: pygame.Surface, sizer, ss: spriteSheet.SpriteSheet):
+    def __init__(self, ss: spriteSheet.SpriteSheet):
         # variables
-        self.screen = screen
-        self.screenw = screen.get_width()
-        self.screenh = screen.get_height()
-        self.sizer = sizer
+        screenw = config.screen.get_width()
+        screenh = config.screen.get_height()
         self.axis = 0
         # init buttons
-        self.visionB = SettingButton(0, 1, self.screenw, self.screenh, self.sizer, ss)
-        self.enemyB = SettingButton(1, 0, self.screenw, self.screenh, self.sizer, ss)
-        self.cB = SettingButton(2, 0, self.screenw, self.screenh, self.sizer, ss)
-        self.dB = SettingButton(3, 0, self.screenw, self.screenh, self.sizer, ss)
+        self.visionB = SettingButton(0, 1, screenw, screenh, config.sizer, ss)
+        self.enemyB = SettingButton(1, 0, screenw, screenh, config.sizer, ss)
+        self.cB = SettingButton(2, 0, screenw, screenh, config.sizer, ss)
+        self.dB = SettingButton(3, 0, screenw, screenh, config.sizer, ss)
         self.buttons = [self.visionB, self.enemyB, self.cB, self.dB]
         self.active = self.visionB
         # settings bar
-        self.bg = self.screen.copy()
+        self.bg = config.screen.copy()
         self.bg.fill((0xeb, 0xd2, 0xbe))
-        bar_dim = (int(self.screenw/4), sizer*8)
+        bar_dim = (int(screenw/4), config.sizer*8)
         bar = pygame.transform.scale(ss.image_at((136, 88, 8, 8), (255, 255, 255)), bar_dim)
-        spot = pygame.transform.scale(ss.image_at((152, 88, 10, 10), -1), (sizer*10, sizer*10))
+        spot = pygame.transform.scale(ss.image_at((152, 88, 10, 10), -1), (config.sizer*10, config.sizer*10))
         for i in range(4):
-            bar_rect = bar.get_rect(center=(self.screenw/2, (3+i)/8*self.screenh))
+            bar_rect = bar.get_rect(center=(screenw/2, (3+i) / 8*screenh))
             self.bg.blit(bar, bar_rect)
             for k in range(3):
-                spotr = spot.get_rect(center=((3+k)/8 * self.screenw, (3+i)/8*self.screenh))
+                spotr = spot.get_rect(center=((3+k)/8 * screenw, (3+i) / 8*screenh))
                 self.bg.blit(spot, spotr)
 
     def loop(self, joystick: pygame.joystick.Joystick):
         """runs the main_menu"""
         font = pygame.font.Font(pygame.font.get_default_font(), 36)
         # first drawing
-        self.screen.blit(self.bg, self.bg.get_rect())
+        config.screen.blit(self.bg, self.bg.get_rect())
         for button in self.buttons:
-            self.screen.blit(button.image, button.rect)
+            config.screen.blit(button.image, button.rect)
         pygame.display.flip()
 
         if joystick:
@@ -180,13 +175,13 @@ class SettingsMenu:
             # update old_axes
             old_axes = [horizontal, vertical]
 
-            self.screen.blit(self.bg, self.bg.get_rect())
+            config.screen.blit(self.bg, self.bg.get_rect())
             for button in self.buttons:
-                self.screen.blit(button.image, button.rect)
+                config.screen.blit(button.image, button.rect)
 
             # now print the text
             text_surface = font.render(text, True, (0, 0, 0))
-            self.screen.blit(text_surface, dest=(0, 0))
+            config.screen.blit(text_surface, dest=(0, 0))
 
             pygame.display.flip()
             clock.tick(120)

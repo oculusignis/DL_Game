@@ -1,7 +1,7 @@
 import pygame
 import time
-from pygame.locals import (QUIT, MOUSEBUTTONDOWN)
-
+from pygame.locals import QUIT
+import config
 import enemys
 from Player import Player
 from colorbox import ColorBox
@@ -15,9 +15,7 @@ usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start
 
 
 class Game:
-    def __init__(self, screen, number_of_players):
-        self.screen = screen
-        self.mult = 3
+    def __init__(self, number_of_players):
         # change settings as specified in settings
         with open('settings.txt') as f:
             for line in f.readlines():
@@ -25,14 +23,14 @@ class Game:
                 exec("self." + line)
 
         # Create Sprite Groups and add sprites
-        box = ColorBox(self.screen)
+        box = ColorBox(config.screen)
         self.players = pygame.sprite.Group()
-        self.enemies = pygame.sprite.Group(enemys.Enemy1(self.mult))
+        self.enemies = pygame.sprite.Group(enemys.Enemy1(config.sizer))
         self.boxes = pygame.sprite.Group(box)
         self.all_sprites = pygame.sprite.Group(box)
 
         for x in range(number_of_players):
-            player = Player(x, self.mult, self.screen, framerate)
+            player = Player(x, config.sizer, config.screen, framerate)
             self.players.add(player)
             self.all_sprites.add(player)
 
@@ -84,7 +82,7 @@ class Game:
                         player.move_info["move"] = 0
                 elif player.status["alive"] < 0:
                     # player dead -> DeathMenu -> reset game
-                    dm = DeathMenu(self.screen, self.mult)
+                    dm = DeathMenu(config.screen, config.sizer)
                     program_state = dm.loop(joystick)  # TODO use joystick handler, also in all menus
 
                     # reset all
@@ -92,11 +90,11 @@ class Game:
                         entity.reset()
 
             # Set Background Color
-            self.screen.fill(bg)
+            config.screen.fill(bg)
 
             # Draw all entities
             for entity in self.all_sprites:
-                self.screen.blit(entity.image, entity.rect)
+                config.screen.blit(entity.image, entity.rect)
 
             #     prog_state["game"] = False
             #     prog_state["main_menu"] = True

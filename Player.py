@@ -1,4 +1,5 @@
 import pygame
+import config
 from spriteSheet import SpriteSheet
 
 orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
