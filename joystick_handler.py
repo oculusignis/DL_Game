@@ -6,6 +6,11 @@ usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start
 # TODO use  this in --------------------- -> MAIN, MENU, PLAYER AND GAME <- ------------------------------
 
 
+# TODO function: return connected joysticks
+
+# TODO function: return master joystick
+
+
 # TODO wait till no input
 def js_wait_normal_all():
     """waits until no 'Start' or 'A' is pressed on any joystick"""
@@ -16,10 +21,11 @@ def js_wait_normal_all():
         pygame.event.get()
 
         for x in range(pygame.joystick.get_count()):
-            js = pygame.joystick.Joystick(x)
-            js.init()
+            jos = pygame.joystick.Joystick(x)
+            jos.init()
 
-            if js.get_button(usb_lib["Start"]) or js.get_button(usb_lib["A"]):
+            if jos.get_button(usb_lib["Start"]) or jos.get_button(usb_lib["A"]):
+                done = False
                 break
             else:
                 done = True
@@ -39,7 +45,7 @@ def js_wait_normal(joystick: pygame.joystick.Joystick):
         clock.tick(20)
 
 
-def js_noconnect():
+def js_nocontroller():
     """displays Error, until a joystick is connected"""
     clock = pygame.time.Clock()
     pygame.joystick.init()
@@ -74,9 +80,16 @@ if __name__ == "__main__":
     config.__init__()
     config.screen.fill((200, 230, 230))
     pygame.display.flip()
-    pygame.init()
+    pygame.event.get()
     pygame.joystick.init()
 
-    js_noconnect()
+    clk = pygame.time.Clock()
+
+    js = pygame.joystick.Joystick(0)
+    while not js.get_button(usb_lib["A"]):
+        pygame.event.get()
+        clk.tick(20)
+
+    js_wait_normal_all()
 
     pygame.quit()

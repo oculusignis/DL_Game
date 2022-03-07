@@ -1,6 +1,5 @@
 import pygame
 import config
-from spriteSheet import SpriteSheet
 
 orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
@@ -13,13 +12,10 @@ js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start"
 class Player(pygame.sprite.Sprite):
     """Player Object, controlled by WASD and SPACE"""
 
-    def __init__(self, player_number: int, mult: int, screen: pygame.Surface, framerate: int):
+    def __init__(self, player_number: int):
         """Initialize Player with the scaling Multiplier"""
         super().__init__()
         # general game data
-        self.screen = screen
-        self.size_multiplier = mult
-        self.framerate = framerate
         self.js = pygame.joystick.Joystick(player_number)
 
         # player attributes
@@ -31,22 +27,23 @@ class Player(pygame.sprite.Sprite):
         self.dash_counter = 1000
 
         # init image and rect
-        self.ss = SpriteSheet('resources/Sam66_22-28.png')
+        self.ss = config.sheet_player
         self.image = self.getspriteimage()
         self.rect = self.image.get_bounding_rect()
-        self.center = (self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8)
+        self.center = (config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8)
         self.move(self.center)
 
         # init hitboxes
-        self.hitbox = pygame.rect.Rect(self.center[0] + 11*mult, self.center[1] + 11*mult, 22*mult, 22*mult)  # TODO
-        self.sword = Sword(mult)
+        self.hitbox = pygame.rect.Rect(self.center[0] + 11*config.sizer, self.center[1] + 11*config.sizer,
+                                       22*config.sizer, 22*config.sizer)  # TODO
 
     def reset(self):
         self.xy_change = [0, 0]
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
+        self.image = self.getspriteimage()
         self.dash_counter = 1000
-        self.move((self.screen.get_width() / 2, self.screen.get_height() - self.screen.get_height() / 8))
+        self.move((config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8))
         self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}
 
     def getspriteimage(self):
@@ -56,7 +53,7 @@ class Player(pygame.sprite.Sprite):
         x = self.move_info["move"] * sizex
         y = orientationLib[self.orientation] * sizey
         return pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),
-                                      (sizex*self.size_multiplier, sizey*self.size_multiplier)).convert_alpha()
+                                      (sizex * config.sizer, sizey * config.sizer)).convert_alpha()
 
     def move(self, loc=(0, 0)):
         """moves character to loc coordinates"""
@@ -97,7 +94,7 @@ class Player(pygame.sprite.Sprite):
         if self.orientation == old_orientation:
             self.move_info["time"] += dt
             # increase move number if more than a 1/4 s passed
-            if self.move_info["time"] > self.framerate / 4:
+            if self.move_info["time"] > config.framerate / 4:
                 self.move_info["move"] = self.move_info["move"] + 1 if self.move_info["move"] < 3 else 0
                 self.move_info["time"] = 0
         else:
@@ -121,7 +118,7 @@ class Player(pygame.sprite.Sprite):
         """death animation"""
         self.move_info["time"] += dt
         # increase move number if more than a 1/4 s passed
-        if self.move_info["time"] > self.framerate / 4:
+        if self.move_info["time"] > config.framerate / 4:
             self.move_info["move"] = self.move_info["move"] + 1
             self.move_info["time"] = 0
             if self.move_info["move"] < 4:
@@ -135,7 +132,6 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt):
         """update Player sprite"""
-        screenw, screenh = self.screen.get_size()
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
             startdash = all((self.js.get_button(js_lib["B"]), self.dash_counter == 1000, self.orientation != "idle"))
@@ -152,12 +148,12 @@ class Player(pygame.sprite.Sprite):
             # keep player in screen
             if self.rect.left < 0:
                 self.rect.left = 0
-            if self.rect.right > screenw:
-                self.rect.right = screenw
+            if self.rect.right > config.screen.get_width():
+                self.rect.right = config.screen.get_width()
             if self.rect.top < 0:
                 self.rect.top = 0
-            if self.rect.bottom > screenh:
-                self.rect.bottom = screenh
+            if self.rect.bottom > config.screen.get_height():
+                self.rect.bottom = config.screen.get_height()
 
         elif self.status["alive"] == 0:
             self.orientation = 'death'

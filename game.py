@@ -5,34 +5,31 @@ import config
 import enemys
 from Player import Player
 from colorbox import ColorBox
-from menus import MainMenu, DeathMenu
 
 # variables
 bg = (0xeb, 0xd2, 0xbe)
-framerate = 120
 
 usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
 
 class Game:
     def __init__(self, number_of_players):
-        # change settings as specified in settings
-        with open('settings.txt') as f:
-            for line in f.readlines():
-                # execute string as python code
-                exec("self." + line)
-
         # Create Sprite Groups and add sprites
-        box = ColorBox(config.screen)
+        box = ColorBox()
         self.players = pygame.sprite.Group()
-        self.enemies = pygame.sprite.Group(enemys.Enemy1(config.sizer))
+        test_enemy = enemys.Enemy1()
+        self.enemies = pygame.sprite.Group(test_enemy)
         self.boxes = pygame.sprite.Group(box)
-        self.all_sprites = pygame.sprite.Group(box)
+        self.all_sprites = pygame.sprite.Group(box, test_enemy)
 
         for x in range(number_of_players):
-            player = Player(x, config.sizer, config.screen, framerate)
+            player = Player(x)
             self.players.add(player)
             self.all_sprites.add(player)
+
+    def reset(self):
+        for entity in self.all_sprites:
+            entity.reset()
 
     def loop(self):
         # initiate specific vars
@@ -42,14 +39,14 @@ class Game:
 
         while gaming:
             # time stuff
-            dt = (time.time() - last_time) * framerate
+            dt = (time.time() - last_time) * config.framerate
             last_time = time.time()
 
             # Did the user click the window close button?
             for event in pygame.event.get():
                 # User press Key?
                 if event.type == QUIT:
-                    return "quit"
+                    config.endit()
                 # Add new enemy?
                 # elif event.type == ADDENEMY:
                 #     new_enemy = Enemy()
@@ -59,7 +56,8 @@ class Game:
             # mangage player inputs
             for player in self.players:
                 if player.js.get_button(usb_lib["Start"]):
-                    return "main_menu"
+                    config.state = "main_menu"
+                    return
 
                 player.update(dt)
 
@@ -67,8 +65,8 @@ class Game:
                 self.enemies.update(player, dt)
 
                 # Check if player has collected a colorbox
-                if pygame.sprite.spritecollideany(player.sword, self.boxes):
-                    print("Transparent hit")
+                # if pygame.sprite.spritecollideany(player.sword, self.boxes):
+                #     print("Transparent hit")
 
                 # player touch box?
                 if box := pygame.sprite.spritecollideany(player, self.boxes):
@@ -82,12 +80,8 @@ class Game:
                         player.move_info["move"] = 0
                 elif player.status["alive"] < 0:
                     # player dead -> DeathMenu -> reset game
-                    dm = DeathMenu(config.screen, config.sizer)
-                    program_state = dm.loop(joystick)  # TODO use joystick handler, also in all menus
-
-                    # reset all
-                    for entity in self.all_sprites:
-                        entity.reset()
+                    config.state = "death_menu"
+                    return
 
             # Set Background Color
             config.screen.fill(bg)
@@ -103,4 +97,4 @@ class Game:
             pygame.display.flip()
 
             # Ensure program maintains 60 FPS
-            clock.tick(framerate)
+            clock.tick(config.framerate)

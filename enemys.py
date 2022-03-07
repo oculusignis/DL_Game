@@ -1,12 +1,12 @@
 import pygame
+import config
 
 
 class Enemy1(pygame.sprite.Sprite):
     """Basic Enemy Object, walks to Player"""
 
-    def __init__(self, mult):
+    def __init__(self):
         super().__init__()
-        self.size_multiplier = mult
         self.image = pygame.image.load('resources/rectSprite/center.png')
         self.rect = self.image.get_rect()
         self.area = pygame.Rect((0, 0, 100, 100))

@@ -2,16 +2,11 @@
 # Import and initialize the pygame library
 import pygame
 import config
-import time
-from pygame.locals import (
-    QUIT,
-    MOUSEBUTTONDOWN
-)
 
 import enemys
 from Player import Player
 from colorbox import ColorBox
-from menus import MainMenu, DeathMenu
+import menus
 import joystick_handler
 from game import Game
 
@@ -36,8 +31,6 @@ pygame.init()
 window_info = pygame.display.Info()
 SCREEN_WIDTH = window_info.current_w
 SCREEN_HEIGHT = window_info.current_h
-# TODO make it setting
-framerate = 120
 
 # Set up the drawing window and name it
 # screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
@@ -56,52 +49,31 @@ ADDENEMY = pygame.USEREVENT + 1
 ADDCLOUD = pygame.USEREVENT + 2
 pygame.time.set_timer(ADDCLOUD, 1000)
 
-# Create Sprite Groups
-enemies = pygame.sprite.Group()
-boxes = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
-
-# Instantiate Player
-player = Player(0, size_multiplier, screen, framerate)
-all_sprites.add(player)
-
-# Instantiate Colorbox
-randomBox = ColorBox(screen)
-boxes.add(randomBox)
-all_sprites.add(randomBox)
-
-# Instantiate Enemy
-enemy = enemys.Enemy1(size_multiplier)
-enemies.add(enemy)
-all_sprites.add(enemy)
-
 # Setup Clock
 clock = pygame.time.Clock()
-
-try:
-    # Initialize the joysticks
-    pygame.joystick.init()
-    joystick = pygame.joystick.Joystick(0)
-except pygame.error:
-    joystick = None
-font = pygame.font.Font(pygame.font.get_default_font(), 36)
+config.init()
 
 # Run until the user asks to quit
-running = True
-game_running = False
-menu_running = True
-main_menu = MainMenu()
-program_state = "main_menu"
+main_menu = menus.MainMenu()
+setting_menu = menus.SettingsMenu()
+death_menu = menus.DeathMenu()
+game = Game(1)
 
 # Window loop
-while program_state != "quit":
+while config.state != "quit":
     # run main_menu loop
-    if program_state == "main_menu":
+    if config.state == "main_menu":
         program_state = main_menu.loop()
-
     # run game loop
-    if program_state == "game":
-        pass
+    elif config.state == "game":
+        game.loop()
+    # go in settings
+    elif config.state == "settings":
+        setting_menu.loop()
+    # call menu of shame
+    elif config.state == "death_menu":
+        death_menu.loop()
+        game.reset()
 
 # Done! Time to quit.
 pygame.quit()

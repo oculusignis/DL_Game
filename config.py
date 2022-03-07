@@ -1,15 +1,27 @@
 import pygame
+import spriteSheet
 # file that handles global variables for the whole project
 
 screen: pygame.Surface
-sizer = 1
-state = 11   # main_menu = 10, settings = 11, game = 20     first number is main category, x0 is parent of category
+sheet_button: spriteSheet.SpriteSheet
+sheet_player: spriteSheet.SpriteSheet
+sizer = 3
+framerate = 120
+
+# main_menu = 10, settings = 11, death_menu = 12, game = 20
+# first number is main category, x0 is parent of category
+state = 'main_menu'
 
 
-def __init__(size=(0, 0)):
+def init(size=(0, 0)):
     global screen
     screen = pygame.display.set_mode(size)
     global sizer
+    global sheet_button
+    sheet_button = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+    global sheet_player
+    sheet_player = spriteSheet.SpriteSheet("resources/Sam66_22-28.png")
+
     # Todo add all game variables
 
     '''
@@ -18,3 +30,10 @@ def __init__(size=(0, 0)):
             # execute string as python code
             exec(global '' + line)
     '''
+
+
+def endit(msg=""):
+    pygame.quit()
+    if msg:
+        print(msg)
+    exit()

@@ -11,20 +11,28 @@ clock = pygame.time.Clock()
 
 
 class MainMenu:
-    """manages menu_running buttons and their states"""
+    """manages buttons and their states"""
     def __init__(self):
         self.active = 0
         self.states = {0: "play", 1: "settings", 2: "exit"}
-        ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        ss = config.sheet_button
         play_button = MainButton(0, 1, ss)
         setting_button = MainButton(1, 0, ss)
         exit_button = MainButton(2, 0, ss)
         self.buttons = (play_button, setting_button, exit_button)
-        self.settings = SettingsMenu(ss)
+        self.settings = SettingsMenu()
         self.axis = 0
 
-    def update(self, joystick):
+    def update(self):
         """update Buttons"""
+
+        # get joystick
+        try:
+            joystick = pygame.joystick.Joystick(0)
+        except pygame.error:
+            joystick_handler.js_nocontroller()
+            joystick = pygame.joystick.Joystick(0)
+
         axis = round(joystick.get_axis(0))
         if self.axis != axis:
             self.axis = axis
@@ -41,7 +49,7 @@ class MainMenu:
         try:
             joystick = pygame.joystick.Joystick(0)
         except pygame.error:
-            joystick_handler.js_noconnect()
+            joystick_handler.js_nocontroller()
             joystick = pygame.joystick.Joystick(0)
 
         # first draw
@@ -55,30 +63,32 @@ class MainMenu:
             pygame.event.get()
             clock.tick(20)
         # start menu loop
-        while True:
+        while config.state == "main_menu":
             config.screen.fill(menu_color)
 
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
-                    return "quit"
+                    config.endit()
 
             # get js values
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
+# Todo manage states below
             if jbuttons[js_lib["A"]] or jbuttons[js_lib["Select"]]:
                 if self.states[self.active] == "play":
-                    return "game"
+                    config.state = "game"
+                    return
                 elif self.states[self.active] == "settings":
-                    if self.settings.loop(joystick) == "quit":
-                        return "quit"
+                    self.settings.loop()
                 elif self.states[self.active] == "exit":
-                    return "quit"
+                    config.endit()
 
             if jbuttons[js_lib["Start"]]:
-                return "game"
+                config.state = "game"
+                return
 
-            self.update(joystick)
+            self.update()
             for button in self.buttons:
                 config.screen.blit(button.image, button.rect)
             pygame.display.flip()
@@ -109,8 +119,9 @@ class MainButton(pygame.sprite.Sprite):
 
 
 class SettingsMenu:
-    def __init__(self, ss: spriteSheet.SpriteSheet):
+    def __init__(self):
         # variables
+        ss = config.sheet_button
         screenw = config.screen.get_width()
         screenh = config.screen.get_height()
         self.axis = 0
@@ -134,7 +145,7 @@ class SettingsMenu:
                 spotr = spot.get_rect(center=((3+k)/8 * screenw, (3+i) / 8*screenh))
                 self.bg.blit(spot, spotr)
 
-    def loop(self, joystick: pygame.joystick.Joystick):
+    def loop(self):
         """runs the main_menu"""
         font = pygame.font.Font(pygame.font.get_default_font(), 36)
         # first drawing
@@ -143,6 +154,7 @@ class SettingsMenu:
             config.screen.blit(button.image, button.rect)
         pygame.display.flip()
 
+        joystick = pygame.joystick.Joystick(0)
         if joystick:
             # while "A" is still pressed do nothing
             while joystick.get_button(js_lib["A"]):
@@ -152,18 +164,19 @@ class SettingsMenu:
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
-                    return "quit"
+                    config.endit()
 
             # get js values
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
             text = f"buttons={jbuttons}     axis={[horizontal, vertical]}       oldaxes={old_axes}"
 
-            if jbuttons[js_lib["Start"]] or jbuttons[js_lib["Y"]]:
-                while joystick.get_button(js_lib["Start"]):
-                    pygame.event.get()
-                    clock.tick(20)
-                return "main_menu"
+            if any((jbuttons[js_lib["Start"]], jbuttons[js_lib["B"]])):
+                # while any((joystick.get_button(js_lib["Start"]), joystick.get_button(js_lib["B"]))):
+                #     pygame.event.get()
+                #     clock.tick(20)
+                config.state = "main_menu"
+                return
 
             if horizontal and horizontal != old_axes[0]:
                 self.active.update(horizontal)
@@ -222,15 +235,14 @@ class SettingButton(pygame.sprite.Sprite):
 
 class DeathMenu:
     """main_menu shown when player dies"""
-    def __init__(self, screen: pygame.Surface, mult: int):
-        self.screen = screen
-        self.playB = DeathButton(0, True, screen, mult)
-        self.homeB = DeathButton(3, False, screen, mult)
+    def __init__(self):
+        self.playB = DeathButton(0, True)
+        self.homeB = DeathButton(3, False)
 
     def get_background(self):
         """returns old game state with opaque layers on top as a Surface"""
         # copy of game_screen for main_menu background
-        old_game = self.screen.copy()
+        old_game = config.screen.copy()
         center = old_game.get_rect().center
         width, height = old_game.get_size()
         # opaque surface preparation
@@ -244,15 +256,17 @@ class DeathMenu:
             old_game.blit(opaque_surf, opaque_rect)
         return old_game
 
-    def loop(self, joystick: pygame.joystick):
-        """displays and controlls the deathmenu, returns future game state"""
+    def loop(self):
+        """displays and controlls the deathmenu, sets future program state before returning"""
         # draw death menu for the first time
         bg = self.get_background()
         bg_rect = bg.get_rect()
-        self.screen.blit(bg, bg_rect)
-        self.screen.blit(self.playB.image, self.playB.rect)
-        self.screen.blit(self.homeB.image, self.homeB.rect)
+        config.screen.blit(bg, bg_rect)
+        config.screen.blit(self.playB.image, self.playB.rect)
+        config.screen.blit(self.homeB.image, self.homeB.rect)
         pygame.display.flip()
+
+        joystick = pygame.joystick.Joystick(0)
 
         # run death menu loop
         while True:
@@ -260,25 +274,27 @@ class DeathMenu:
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
-                    return "quit"
+                    config.endit()
 
             # get js values
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
             if jbuttons[js_lib["Y"]]:
-                return "main_menu"
+                config.state = "main_menu"
+                return
             if jbuttons[js_lib["Start"]]:
                 while joystick.get_button(js_lib["Start"]):
                     pygame.event.get()
                     clock.tick(30)
-                return "game"
+                config.state = "game"
+                return
             if horizontal:
                 self.playB.update()
                 self.homeB.update()
                 # show buttons
-                self.screen.blit(self.playB.image, self.playB.rect)
-                self.screen.blit(self.homeB.image, self.homeB.rect)
+                config.screen.blit(self.playB.image, self.playB.rect)
+                config.screen.blit(self.homeB.image, self.homeB.rect)
 
             while round(joystick.get_axis(0)):
                 pygame.event.get()
@@ -289,9 +305,10 @@ class DeathMenu:
                     pygame.event.get()
                     clock.tick(30)
                 if self.playB.highlight:
-                    return "game"
+                    config.state = "game"
                 else:
-                    return "main_menu"
+                    config.state = "main_menu"
+                return
 
             pygame.display.flip()
             clock.tick(120)
@@ -299,20 +316,19 @@ class DeathMenu:
 
 class DeathButton(pygame.sprite.Sprite):
     """Sprite and state of death main_menu button"""
-    def __init__(self, button_number, highlight, screen: pygame.Surface, mult: int):
+    def __init__(self, button_number, highlight):
         super(DeathButton, self).__init__()
         self.bn = button_number
-        self.mult = mult
         self.highlight = highlight
-        self.ss = spriteSheet.SpriteSheet("resources/MenuButtons.png")
+        self.ss = config.sheet_button
         self.image = pygame.transform.scale(self.ss.image_at((button_number * 56, highlight * 40, 56, 40), -1),
-                                            (56 * self.mult, 40 * self.mult))
-        offset = int(screen.get_width()/16) if button_number > 0 else -int(screen.get_width()/16)
-        self.rect = self.image.get_rect(center=(screen.get_width()/2 + offset, screen.get_height() * 3/5))
+                                            (56 * config.sizer, 40 * config.sizer))
+        offset = int(config.screen.get_width()/16) if button_number > 0 else -int(config.screen.get_width()/16)
+        self.rect = self.image.get_rect(center=(config.screen.get_width()/2 + offset, config.screen.get_height() * 3/5))
         self.color = (0, 255, 0) if button_number > 0 else (255, 0, 0)
 
     def update(self):
         """toggle highlight on button on/off"""
         self.highlight = not self.highlight
         self.image = pygame.transform.scale(self.ss.image_at((self.bn * 56, self.highlight * 40, 56, 40), -1),
-                                            (56 * self.mult, 40 * self.mult))
+                                            (56 * config.sizer, 40 * config.sizer))
