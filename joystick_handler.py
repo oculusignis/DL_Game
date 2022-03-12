@@ -2,6 +2,7 @@ import pygame
 import config
 
 usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+js_list = []
 
 # TODO use  this in --------------------- -> MAIN, MENU, PLAYER AND GAME <- ------------------------------
 
@@ -9,6 +10,11 @@ usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start
 # TODO function: return connected joysticks
 
 # TODO function: return master joystick
+
+def find_all():
+    n = pygame.joystick.get_count()
+    js = pygame.joystick.Joystick(0)
+    # pygame.joystick.
 
 
 # TODO wait till no input
@@ -35,8 +41,7 @@ def js_wait_normal_all():
 def js_wait_normal(joystick: pygame.joystick.Joystick):
     """waits till joystick's 'Start' and 'A' aren't pressed"""
     clock = pygame.time.Clock()
-    done = False
-    while not done:
+    while True:
         pygame.event.get()
         if joystick.get_button((usb_lib["Start"])) or joystick.get_button(usb_lib["A"]):
             pass

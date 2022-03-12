@@ -12,7 +12,7 @@ class Enemy1(pygame.sprite.Sprite):
         self.area = pygame.Rect((0, 0, 100, 100))
         self.area.center = self.rect.center
         self.following = None
-        self.speed = 2
+        self.speed = 3
 
     def reset(self):
         self.rect.topleft = (0, 0)

@@ -58,10 +58,9 @@ class MainMenu:
             config.screen.blit(button.image, button.rect)
         pygame.display.flip()
 
-        # wait for user to stop pressing start
-        while joystick.get_button(js_lib["Start"]):
-            pygame.event.get()
-            clock.tick(20)
+        # wait for user to stop pressing buttons
+        joystick_handler.js_wait_normal(joystick)
+
         # start menu loop
         while config.state == "main_menu":
             config.screen.fill(menu_color)
@@ -280,15 +279,6 @@ class DeathMenu:
             horizontal, vertical = [round(joystick.get_axis(0)), round(joystick.get_axis(1))]
             jbuttons = [joystick.get_button(b) for b in range(10)]
 
-            if jbuttons[js_lib["Y"]]:
-                config.state = "main_menu"
-                return
-            if jbuttons[js_lib["Start"]]:
-                while joystick.get_button(js_lib["Start"]):
-                    pygame.event.get()
-                    clock.tick(30)
-                config.state = "game"
-                return
             if horizontal:
                 self.playB.update()
                 self.homeB.update()
@@ -301,9 +291,6 @@ class DeathMenu:
                 clock.tick(30)
 
             if jbuttons[js_lib["A"]]:
-                while joystick.get_button(js_lib["A"]):
-                    pygame.event.get()
-                    clock.tick(30)
                 if self.playB.highlight:
                     config.state = "game"
                 else:

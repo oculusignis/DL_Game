@@ -2,10 +2,6 @@
 # Import and initialize the pygame library
 import pygame
 import config
-
-import enemys
-from Player import Player
-from colorbox import ColorBox
 import menus
 import joystick_handler
 from game import Game
