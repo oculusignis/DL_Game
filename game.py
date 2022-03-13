@@ -30,12 +30,16 @@ class Game:
     def reset(self):
         for entity in self.all_sprites:
             entity.reset()
+        config.score = 0
 
     def loop(self):
         # initiate specific vars
         last_time = time.time()
         gaming = True
         clock = pygame.time.Clock()
+        font = pygame.font.Font(pygame.font.get_default_font(), 36)
+        screenw = config.screen.get_width()
+        screenh = config.screen.get_height()
 
         while gaming:
             # time stuff
@@ -71,6 +75,7 @@ class Game:
                 # player touch box?
                 if box := pygame.sprite.spritecollideany(player, self.boxes):
                     box.move()
+                    config.score += 1
 
                 # player hit? --> death menu
                 if player.status["alive"] > 0:
@@ -90,6 +95,10 @@ class Game:
             for entity in self.all_sprites:
                 config.screen.blit(entity.image, entity.rect)
 
+            # Draw Score
+            text_surface = font.render(str(config.score), True, (0, 0, 0))
+            config.screen.blit(text_surface, dest=(screenw/2, 10))
+
             #     prog_state["game"] = False
             #     prog_state["main_menu"] = True
 
@@ -98,3 +107,5 @@ class Game:
 
             # Ensure program maintains 60 FPS
             clock.tick(config.framerate)
+
+

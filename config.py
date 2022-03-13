@@ -1,4 +1,7 @@
 import pygame
+
+import config
+import game
 import spriteSheet
 # file that handles global variables for the whole project
 
@@ -7,6 +10,7 @@ sheet_button: spriteSheet.SpriteSheet
 sheet_player: spriteSheet.SpriteSheet
 sizer = 3
 framerate = 120
+score = 0
 
 # main_menu = 10, settings = 11, death_menu = 12, game = 20
 # first number is main category, x0 is parent of category
