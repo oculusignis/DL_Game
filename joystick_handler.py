@@ -9,12 +9,14 @@ js_list = []
 
 # TODO function: return connected joysticks
 
-# TODO function: return master joystick
+# TODO function: return master joystick     <- really needed?
 
-def find_all():
+# TODO function: close unconnected joysticks
+def reset():
     n = pygame.joystick.get_count()
-    js = pygame.joystick.Joystick(0)
-    # pygame.joystick.
+
+# TODO function: joystick config
+# TODO return library with above config  -> auto detection? <-
 
 
 # TODO wait till no input
@@ -71,30 +73,26 @@ def js_nocontroller():
         pygame.event.get()
         clock.tick(20)
 
-
-# TODO joystick config
-def js_config():
-    """returns specific config library"""
-    pass
-
-# TODO return library with above config  -> auto detection? <-
+    # TODO add call to update controller list
 
 
 # TODO remove after testing
 if __name__ == "__main__":
-    config.__init__()
-    config.screen.fill((200, 230, 230))
-    pygame.display.flip()
+    #config.init()
+    pygame.init()
     pygame.event.get()
     pygame.joystick.init()
 
     clk = pygame.time.Clock()
 
-    js = pygame.joystick.Joystick(0)
-    while not js.get_button(usb_lib["A"]):
-        pygame.event.get()
-        clk.tick(20)
+    run = True
+    while run:
+        for event in pygame.event.get():
+            d = event.__dict__
+            print(d)
+            for n in range(pygame.joystick.get_count()):
+                print(pygame.joystick.Joystick(0).get_name())
 
-    js_wait_normal_all()
+        clk.tick(20)
 
     pygame.quit()

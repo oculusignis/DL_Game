@@ -1,13 +1,23 @@
+import math
 import pygame
+import config
 
 
-pygame.init()
+config.init((600, 600))
+
 clock = pygame.time.Clock()
-pygame.joystick.init()
-js0 = pygame.joystick.Joystick(0)
-js1 = pygame.joystick.Joystick(1)
+counter = 0
+edge1 = math.pi*1.1
+edge2 = math.pi*0.8
 
 while True:
-    pygame.event.get()
-    print(f"js0: {js0.get_button(1)}    js1: {js1.get_button(1)}")
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            config.endit()
+
+    config.screen.fill((20, 180, 180))
+    pygame.draw.arc(config.screen, (0, 0, 0), [80, 50, 120, 80], edge1, edge1 + 0.8*math.pi*counter/100)
+    pygame.display.flip()
+    counter += 2
+    counter = counter % 100
     clock.tick(20)

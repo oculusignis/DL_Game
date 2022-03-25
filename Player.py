@@ -1,5 +1,6 @@
 import pygame
 import config
+import math
 
 orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
@@ -24,7 +25,6 @@ class Player(pygame.sprite.Sprite):
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
         self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}
-        self.dash_counter = 1000
 
         # init image and rect
         self.ss = config.sheet_player
@@ -32,6 +32,13 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_bounding_rect()
         self.center = (config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8)
         self.move(self.center)
+
+        # dash variables
+        self.dash_counter = 1000
+        self.dash_rect = pygame.rect.Rect(self.center[0] + 11*config.sizer, self.center[1] + 11*config.sizer,
+                                          5*config.sizer, 5*config.sizer)
+        self.dash_surf = pygame.Surface(self.dash_rect.size)
+        pygame.draw.arc(self.dash_surf, (0, 0, 0), self.dash_rect, math.pi, 2*math.pi)
 
         # init hitboxes
         self.hitbox = pygame.rect.Rect(self.center[0] + 11*config.sizer, self.center[1] + 11*config.sizer,
@@ -191,3 +198,11 @@ class Sword(pygame.sprite.Sprite):
         """puts sword rect left of the player"""
         self.rect.size = (10 * self.mult, 42 * self.mult)
         self.rect.center = (center[0] - 16, center[1])
+
+
+# TODO remove after testing
+if __name__ == "__main__":
+    config.init((80, 80))
+    config.screen.fill((0, 255, 40))
+    pygame.draw.arc()
+    # TODO try out arc

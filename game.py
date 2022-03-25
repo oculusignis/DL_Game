@@ -96,7 +96,8 @@ class Game:
                 config.screen.blit(entity.image, entity.rect)
 
             # Draw Score
-            text_surface = font.render(str(config.score), True, (0, 0, 0))
+            score_string = ";)" if config.score == 69 else str(config.score)
+            text_surface = font.render(score_string, True, (0, 0, 0))
             config.screen.blit(text_surface, dest=(screenw/2, 10))
 
             #     prog_state["game"] = False

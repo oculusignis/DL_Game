@@ -1,6 +1,4 @@
 import pygame
-
-import config
 import game
 import spriteSheet
 # file that handles global variables for the whole project
