@@ -16,7 +16,8 @@ while True:
             config.endit()
 
     config.screen.fill((20, 180, 180))
-    pygame.draw.arc(config.screen, (0, 0, 0), [80, 50, 120, 80], edge1, edge1 + 0.8*math.pi*counter/100)
+    for i in range(3):
+        pygame.draw.arc(config.screen, (0, 0, 0), [80, 50-i, 120, 80], edge1, edge1 + 0.8*math.pi*counter/100)
     pygame.display.flip()
     counter += 2
     counter = counter % 100

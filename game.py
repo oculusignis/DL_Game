@@ -1,5 +1,6 @@
 import pygame
 import time
+import math
 from pygame.locals import QUIT
 import config
 import enemys
@@ -8,6 +9,7 @@ from colorbox import ColorBox
 
 # variables
 bg = (0xeb, 0xd2, 0xbe)
+edge1 = 1.1 * math.pi
 
 usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
 
@@ -95,6 +97,17 @@ class Game:
             for entity in self.all_sprites:
                 config.screen.blit(entity.image, entity.rect)
 
+            # draw dash bar
+            for player in self.players:
+                color = (80, 80, 80) if player.dash_counter == 1000 else (150, 150, 150)
+                a = player.rect.left + 4 * config.sizer
+                b = player.rect.bottom
+                c = player.rect.width - 8 * config.sizer
+                d = 5 * config.sizer
+                for i in range(3):
+                    pygame.draw.arc(config.screen, color, [a, b + i, c, d], edge1,
+                                    edge1 + 0.8 * math.pi * player.dash_counter / 1000)
+
             # Draw Score
             score_string = ";)" if config.score == 69 else str(config.score)
             text_surface = font.render(score_string, True, (0, 0, 0))
@@ -108,5 +121,3 @@ class Game:
 
             # Ensure program maintains 60 FPS
             clock.tick(config.framerate)
-
-

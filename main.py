@@ -37,7 +37,6 @@ pygame.display.set_caption('DL_Game')
 # TODO make better size multiplier
 # laptop 1536x864 -> 1000
 # size_multiplier = int((screen.get_width() + screen.get_height()) / 1000)
-size_multiplier = 3
 
 # Create custom event for adding new enemy and cloud
 ADDENEMY = pygame.USEREVENT + 1

@@ -174,6 +174,7 @@ class SettingsMenu:
                 # while any((joystick.get_button(js_lib["Start"]), joystick.get_button(js_lib["B"]))):
                 #     pygame.event.get()
                 #     clock.tick(20)
+                config.difficulty = self.buttons[1].setting
                 config.state = "main_menu"
                 return
 

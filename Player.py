@@ -2,8 +2,22 @@ import pygame
 import config
 import math
 
+edge1 = 1.1*math.pi
+
+sprite_size = (22, 28)
+
 orientationLib = {'idle': 0, 'right': 1, 'down': 2, 'left': 3, 'up': 4, 'death': 5}
 js_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
+
+axis2ori = {(0, -1):    'up',
+            (0, 0):     'idle',
+            (0, 1):     'down',
+            (1, -1):    'right',
+            (1, 0):     'right',
+            (1, 1):     'right',
+            (-1, -1):   'left',
+            (-1, 0):    'left',
+            (-1, 1):    'left'}
 # TODO dash bar somewhere on the screen
 # TODO health bar
 
@@ -20,28 +34,30 @@ class Player(pygame.sprite.Sprite):
         self.js = pygame.joystick.Joystick(player_number)
 
         # player attributes
-        self.xy_change = [0, 0]
-        self.base_speed = 4
+        self.xy_change = pygame.math.Vector2(0.0, 0.0)
+        self.speed_base = 4
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
         self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}
+        self.pos = pygame.math.Vector2(config.screen.get_width() / 2,
+                                       config.screen.get_height() - config.screen.get_height() / 8)
 
         # init image and rect
         self.ss = config.sheet_player
         self.image = self.getspriteimage()
         self.rect = self.image.get_bounding_rect()
-        self.center = (config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8)
-        self.move(self.center)
+        self.move(self.pos)
 
         # dash variables
         self.dash_counter = 1000
-        self.dash_rect = pygame.rect.Rect(self.center[0] + 11*config.sizer, self.center[1] + 11*config.sizer,
+        self.dash_regen = 1
+        self.dash_rect = pygame.rect.Rect(self.pos.x + 11*config.sizer, self.pos.y + 11*config.sizer,
                                           5*config.sizer, 5*config.sizer)
         self.dash_surf = pygame.Surface(self.dash_rect.size)
         pygame.draw.arc(self.dash_surf, (0, 0, 0), self.dash_rect, math.pi, 2*math.pi)
 
         # init hitboxes
-        self.hitbox = pygame.rect.Rect(self.center[0] + 11*config.sizer, self.center[1] + 11*config.sizer,
+        self.hitbox = pygame.rect.Rect(self.pos.x + 11*config.sizer, self.pos.y + 11*config.sizer,
                                        22*config.sizer, 22*config.sizer)  # TODO
 
     def reset(self):
@@ -64,38 +80,23 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, loc=(0, 0)):
         """moves character to loc coordinates"""
+        self.pos.update(loc)
         self.rect.center = loc
 
     def walk(self, dt):
         """normal walk animation"""
-        # clear variables
-        self.xy_change = [0, 0]
-
-        # determine change of coordinates
-        axes = [round(self.js.get_axis(0)), round(self.js.get_axis(1))]
-        self.xy_change = axes
-
-        # calculate speed
-        speed = self.base_speed * dt
-        if self.xy_change[0] != 0 and self.xy_change[1] != 0:
-            speed *= 0.9
-
-        # move the rect
-        self.rect.move_ip(self.xy_change[0] * speed, self.xy_change[1] * speed)
+        # get controller_axis
+        self.xy_change = pygame.math.Vector2(round(self.js.get_axis(0)), round(self.js.get_axis(1)))
 
         # Determine Character orientation
         old_orientation = self.orientation
-        if self.xy_change[1] < 0:
-            self.orientation = "up"
-        elif self.xy_change[1] > 0:
-            self.orientation = "down"
+        self.orientation = axis2ori[(round(self.xy_change.x), round(self.xy_change.y))]
 
-        if self.xy_change[0] < 0:
-            self.orientation = "left"
-        elif self.xy_change[0] > 0:
-            self.orientation = "right"
-        if self.xy_change[0] == 0 and self.xy_change[1] == 0:
-            self.orientation = "idle"
+        # determine change of coordinates
+        if self.xy_change.length_squared() > 0:
+            speed = self.speed_base * dt
+            self.xy_change.scale_to_length(speed)
+            self.pos += self.xy_change
 
         # Determine sprite move
         if self.orientation == old_orientation:
@@ -114,12 +115,11 @@ class Player(pygame.sprite.Sprite):
     def dash(self, dt):
         """dash animation"""
         self.dash_counter -= 50          # increase dash counter
-        if self.dash_counter == 0:
-            self.status["dashing"] = False
-        else:
-            self.status["dashing"] = True
-        speed = 2.5 * self.base_speed * dt   # dash speed
-        self.rect.move_ip(self.xy_change[0] * speed, self.xy_change[1] * speed)
+        self.status["dashing"] = False if self.dash_counter == 0 else True  # still dashing?
+        # move
+        speed = 2.5 * self.speed_base * dt   # dash speed
+        self.xy_change.scale_to_length(speed)
+        self.pos += self.xy_change
 
     def death(self, dt):
         """death animation"""
@@ -150,17 +150,24 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.walk(dt)
                 if self.dash_counter < 1000:
-                    self.dash_counter += 1
+                    self.dash_counter += self.dash_regen
 
             # keep player in screen
-            if self.rect.left < 0:
-                self.rect.left = 0
-            if self.rect.right > config.screen.get_width():
-                self.rect.right = config.screen.get_width()
-            if self.rect.top < 0:
-                self.rect.top = 0
-            if self.rect.bottom > config.screen.get_height():
-                self.rect.bottom = config.screen.get_height()
+            x_margin = sprite_size[0]/2 * config.sizer
+            y_margin = sprite_size[1]/2 * config.sizer
+
+            if self.pos.x < x_margin:
+                self.pos.x = x_margin
+            elif self.pos.x > config.screen.get_width() - x_margin:
+                self.pos.x = config.screen.get_width() - x_margin
+
+            if self.pos.y < y_margin:
+                self.pos.y = y_margin
+            elif self.pos.y > config.screen.get_height() - y_margin:
+                self.pos.y = config.screen.get_height() - y_margin
+
+            # Move Player rect to current position
+            self.rect.center = round(self.pos.x), round(self.pos.y)
 
         elif self.status["alive"] == 0:
             self.orientation = 'death'
@@ -198,11 +205,3 @@ class Sword(pygame.sprite.Sprite):
         """puts sword rect left of the player"""
         self.rect.size = (10 * self.mult, 42 * self.mult)
         self.rect.center = (center[0] - 16, center[1])
-
-
-# TODO remove after testing
-if __name__ == "__main__":
-    config.init((80, 80))
-    config.screen.fill((0, 255, 40))
-    pygame.draw.arc()
-    # TODO try out arc
