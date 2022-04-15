@@ -97,16 +97,20 @@ class Game:
             for entity in self.all_sprites:
                 config.screen.blit(entity.image, entity.rect)
 
-            # draw dash bar
+            # TODO fix drawing
+            # draw stamina
             for player in self.players:
-                color = (80, 80, 80) if player.dash_counter == 1000 else (150, 150, 150)
+                color = (80, 80, 80) if player.stamina == 1000 else (150, 150, 150)
                 a = player.rect.left + 4 * config.sizer
                 b = player.rect.bottom
                 c = player.rect.width - 8 * config.sizer
                 d = 5 * config.sizer
                 for i in range(3):
                     pygame.draw.arc(config.screen, color, [a, b + i, c, d], edge1,
-                                    edge1 + 0.8 * math.pi * player.dash_counter / 1000)
+                                    edge1 + 0.8 * math.pi * float(player.stamina) / 1000)
+                    # TODO remove
+                    st_surf = font.render(str(player.stamina), True, (0, 0, 0))
+                    config.screen.blit(st_surf, dest=(screenw/2, 50))
 
             # Draw Score
             score_string = ";)" if config.score == 69 else str(config.score)
