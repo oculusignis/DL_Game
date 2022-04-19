@@ -27,10 +27,10 @@ axis2ori = {(0, -1): 'up',
 # Define player object as extension of pygame.sprite.Sprite
 # Surface drawn on screen is now an attribute of 'player'
 class Player(pygame.sprite.Sprite):
-    """Player Object, controlled by WASD and SPACE"""
+    """player controlled Sprite"""
 
     def __init__(self, player_number: int):
-        """Initialize Player with the scaling Multiplier"""
+        """Initialize Player with the players number"""
         super().__init__()
         # general game data
         self.js = pygame.joystick.Joystick(player_number)
@@ -65,6 +65,7 @@ class Player(pygame.sprite.Sprite):
                                        22 * config.sizer, 22 * config.sizer)  # TODO
 
     def reset(self):
+        """player reset for start of game"""
         self.xy_change = [0, 0]
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
