@@ -1,41 +1,45 @@
-import enum
-
 import pygame
-import math
+import mcreations
 import config
 
 range = 700
 
 
-class Enemy1(pygame.sprite.Sprite):
+class Enemy1(mcreations.Entity):
     """Basic Enemy Object, walks to Player"""
 
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load('resources/rectSprite/center.png')
         self.rect = self.image.get_rect()
+        self.hitbox = self.rect.copy()
         # self.area = pygame.Rect((0, 0, 100, 100))
         # self.area.center = self.rect.center
-        start_x, start_y = 0, 0
-        self.pos = pygame.math.Vector2(start_x, start_y)
+        self.pos = pygame.math.Vector2(8, 8)
         self.following = None
         self.speed = 2
 
-    def reset(self):
-        self.pos.xy = 0, 0
-        self.rect.center = 0, 0
+    def move(self, loc):
+        self.pos.xy = loc
+        self.rect.center = loc
+        self.hitbox.center = loc
 
-    def update(self, player, dt):
+    def reset(self):
+        self.move((8, 8))
+
+    def update(self, dt, *args):
         """update Enemy1 for a single Player"""
+        player = args[0]
         vector2p = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, player.rect.centery - self.rect.centery)
 
         if range > vector2p.length() > 10:
             vector2p.normalize_ip()
-            vector2p.scale_to_length(self.speed + config.score * 0.025)
+            vector2p.scale_to_length(self.speed*dt + config.score*0.025)
             self.pos += vector2p
             self.rect.center = round(self.pos.x), round(self.pos.y)
+            self.hitbox.center = self.rect.center
 
-    def update_multi(self, players, dt):
+    def update_multi(self, dt, *args):
         """update Enemy1 in Multiplayer"""
         # calculate closest player
         closest_player = (range, pygame.math.Vector2(0, 0))  # distance, Vector
@@ -53,5 +57,3 @@ class Enemy1(pygame.sprite.Sprite):
 
             self.pos += closest_player[1]
             self.rect.center = round(self.pos.x), round(self.pos.y)
-
-

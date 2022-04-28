@@ -4,8 +4,9 @@ import math
 from pygame.locals import QUIT
 import config
 import enemys
-from Player import Player
-from colorbox import ColorBox
+
+# TODO implement mcreations
+import mcreations
 
 # variables
 bg = (0xeb, 0xd2, 0xbe)
@@ -17,21 +18,20 @@ usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start
 class Game:
     def __init__(self, number_of_players):
         # Create Sprite Groups and add sprites
-        box = ColorBox()
-        self.players = pygame.sprite.Group()
+        box = mcreations.ColorBox()
+        self.players = mcreations.EntityGroup()
         test_enemy = enemys.Enemy1()
-        self.enemies = pygame.sprite.Group(test_enemy)
-        self.boxes = pygame.sprite.Group(box)
-        self.all_sprites = pygame.sprite.Group(box, test_enemy)
+        self.enemies = mcreations.EntityGroup(test_enemy)
+        self.boxes = mcreations.EntityGroup(box)
+        self.all_sprites = mcreations.EntityGroup(box, test_enemy)
 
         for x in range(number_of_players):
-            player = Player(x)
+            player = mcreations.Player(x)
             self.players.add(player)
             self.all_sprites.add(player)
 
     def reset(self):
-        for entity in self.all_sprites:
-            entity.reset()
+        self.all_sprites.reset()
         config.score = 0
 
     def loop(self):
@@ -68,21 +68,22 @@ class Game:
                 player.update(dt)
 
                 # update enemies
-                self.enemies.update(player, dt)
+                self.enemies.update(dt, player)
 
                 # Check if player has collected a colorbox
                 # if pygame.sprite.spritecollideany(player.sword, self.boxes):
                 #     print("Transparent hit")
 
                 # player touch box?
-                if box := pygame.sprite.spritecollideany(player, self.boxes):
-                    box.move()
-                    config.score += 1
+                if boxes := mcreations.collisions(player, self.boxes):
+                    for box in boxes:
+                        box.move("random")
+                        config.score += 1
 
                 # player hit? --> death menu
                 if player.status["alive"] > 0:
                     # Check if any enemies has collided with player
-                    if pygame.sprite.spritecollideany(player, self.enemies):
+                    if mcreations.collisions(player, self.enemies):
                         player.status["alive"] = 0
                         player.move_info["move"] = 0
                 elif player.status["alive"] < 0:
@@ -94,8 +95,7 @@ class Game:
             config.screen.fill(bg)
 
             # Draw all entities
-            for entity in self.all_sprites:
-                config.screen.blit(entity.image, entity.rect)
+            self.all_sprites.draw(config.screen)
 
             # TODO fix drawing
             # draw stamina

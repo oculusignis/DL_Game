@@ -20,7 +20,6 @@ axis2ori = {(0, -1): 'up',
             (-1, 1): 'left'}
 
 
-# TODO dash bar somewhere on the screen
 # TODO health bar
 
 
