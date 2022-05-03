@@ -3,6 +3,7 @@ import mcreations
 import config
 
 range = 700
+difficulty_scaling = 0.025
 
 
 class Enemy1(mcreations.Entity):
@@ -27,21 +28,22 @@ class Enemy1(mcreations.Entity):
     def reset(self):
         self.move((8, 8))
 
+#    def update(self, dt, *args):
+#        """update Enemy1 for a single Player"""
+#        player = args[0]
+#        vector2p = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, player.rect.centery - self.rect.centery)
+#
+#        if range > vector2p.length() > 10:
+#            vector2p.normalize_ip()
+#            vector2p.scale_to_length(self.speed*dt + config.score*difficulty_scaling)
+#            self.pos += vector2p
+#            self.rect.center = round(self.pos.x), round(self.pos.y)
+#            self.hitbox.center = self.rect.center
+
     def update(self, dt, *args):
-        """update Enemy1 for a single Player"""
-        player = args[0]
-        vector2p = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, player.rect.centery - self.rect.centery)
-
-        if range > vector2p.length() > 10:
-            vector2p.normalize_ip()
-            vector2p.scale_to_length(self.speed*dt + config.score*0.025)
-            self.pos += vector2p
-            self.rect.center = round(self.pos.x), round(self.pos.y)
-            self.hitbox.center = self.rect.center
-
-    def update_multi(self, dt, *args):
         """update Enemy1 in Multiplayer"""
         # calculate closest player
+        players = args[0]
         closest_player = (range, pygame.math.Vector2(0, 0))  # distance, Vector
         for p in players:
             if p.status["alive"] > 0:
@@ -53,7 +55,8 @@ class Enemy1(mcreations.Entity):
         # move to closest player
         if range > closest_player[0] > 10:
             closest_player[1].normalize_ip()
-            closest_player[1].scale_to_length(self.speed)
+            closest_player[1].scale_to_length(self.speed*dt + config.score*difficulty_scaling)
 
             self.pos += closest_player[1]
             self.rect.center = round(self.pos.x), round(self.pos.y)
+            self.hitbox.center = self.rect.center

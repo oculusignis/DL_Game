@@ -52,7 +52,7 @@ config.init()
 main_menu = menus.MainMenu()
 setting_menu = menus.SettingsMenu()
 death_menu = menus.DeathMenu()
-game = Game(1)
+game = Game(pygame.joystick.get_count())
 
 # Window loop
 while config.state != "quit":

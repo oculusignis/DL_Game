@@ -67,13 +67,6 @@ class Game:
 
                 player.update(dt)
 
-                # update enemies
-                self.enemies.update(dt, player)
-
-                # Check if player has collected a colorbox
-                # if pygame.sprite.spritecollideany(player.sword, self.boxes):
-                #     print("Transparent hit")
-
                 # player touch box?
                 if boxes := mcreations.collisions(player, self.boxes):
                     for box in boxes:
@@ -90,6 +83,9 @@ class Game:
                     # player dead -> DeathMenu -> reset game
                     config.state = "death_menu"
                     return
+
+            # update enemies
+            self.enemies.update(dt, self.players)
 
             # Set Background Color
             config.screen.fill(bg)
@@ -109,8 +105,8 @@ class Game:
                     pygame.draw.arc(config.screen, color, [a, b + i, c, d], edge1,
                                     edge1 + 0.8 * math.pi * float(player.stamina) / 1000)
                     # TODO remove following
-                    st_surf = font.render(str(player.stamina), True, (0, 0, 0))
-                    config.screen.blit(st_surf, dest=(screenw/2, 50))
+                    # st_surf = font.render(str(player.stamina), True, (0, 0, 0))
+                    # config.screen.blit(st_surf, dest=(screenw/2, 50))
 
             # Draw Score
             score_string = ";)" if config.score == 69 else str(config.score)

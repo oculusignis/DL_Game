@@ -37,7 +37,9 @@ class Entity(pygame.sprite.Sprite):
 
     def move(self, loc: (float, float)):
         """move entitiy to loc coordinates"""
-        pass
+        self.pos.xy = loc
+        self.rect.center = loc
+        self.hitbox.center = loc
 
     def reset(self):
         pass
@@ -102,6 +104,7 @@ class CharacterGroup(EntityGroup):
     """Works like EntityGroup but with Characters"""
 
     def __init__(self, *characters: Character):
+        super(CharacterGroup, self).__init__()
         self._members = list(characters)
 
 
@@ -157,7 +160,7 @@ class Player(Character):
         self.stamina_regen = 1
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
-        self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}  # TODO remove dashing
+        self.status = {"alive": 1, "dashed": False, "attacking": False, "invulnerable": False}
         self.pos = pygame.math.Vector2(config.screen.get_width() / 2,
                                        config.screen.get_height() - config.screen.get_height() / 8)
 
@@ -167,8 +170,6 @@ class Player(Character):
         self.rect = self.image.get_bounding_rect()
 
         # init hitboxes
-        # self.hitbox = pygame.rect.Rect(self.pos.x + 11 * config.sizer, self.pos.y + 11 * config.sizer,
-        #                                22 * config.sizer, 22 * config.sizer)  # TODO
         self.hitbox = self.rect.copy()
 
         self.move(self.pos)
@@ -179,7 +180,6 @@ class Player(Character):
         self.dash_rect = pygame.rect.Rect(self.pos.x + 11 * config.sizer, self.pos.y + 11 * config.sizer,
                                           5 * config.sizer, 5 * config.sizer)
         self.dash_surf = pygame.Surface(self.dash_rect.size)
-        pygame.draw.arc(self.dash_surf, (0, 0, 0), self.dash_rect, math.pi, 2 * math.pi)
 
     def reset(self):
         """player reset for start of game"""
@@ -190,7 +190,7 @@ class Player(Character):
         self.stamina = 1000
         self.dash_counter = 0
         self.move((config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8))
-        self.status = {"alive": 1, "dashing": False, "attacking": False, "invulnerable": False}
+        self.status = {"alive": 1, "dashed": False, "attacking": False, "invulnerable": False}
 
     def getspriteimage(self):
         """produces a pygame image from the spritesheet"""
@@ -257,13 +257,15 @@ class Player(Character):
         """update Player sprite"""
         if self.status["alive"] > 0:
             # dash or (walk and charge dash)?
-            startdash = all((self.js.get_button(js_lib["B"]), self.stamina > 200, self.orientation != "idle"))
+            startdash = all((self.js.get_button(js_lib["B"]), self.stamina > 300, self.orientation != "idle",
+                             not self.status["dashed"]))
             startattack = all((self.js.get_button(js_lib["A"]), True))  # TODO attack counter instead of True
 
             if self.dash_counter:
                 self.dash(dt)
             elif startdash:
-                self.stamina -= 200
+                self.status["dashed"] = True
+                self.stamina -= 300
                 self.dash(dt)
             elif self.status["attacking"] or startattack:
                 self.attack(dt)
@@ -271,6 +273,9 @@ class Player(Character):
                 self.walk(dt)
                 if self.stamina < 1000:
                     self.stamina += self.stamina_regen
+
+            if self.status["dashed"] and not self.js.get_button(js_lib["B"]):
+                self.status["dashed"] = False
 
             # keep player in screen
             x_margin = sprite_size[0] / 2 * config.sizer
