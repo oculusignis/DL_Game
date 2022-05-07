@@ -71,4 +71,5 @@ while config.state != "quit":
         game.reset()
 
 # Done! Time to quit.
+config.endit()
 pygame.quit()

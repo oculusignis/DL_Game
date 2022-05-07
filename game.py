@@ -32,7 +32,7 @@ class Game:
 
     def reset(self):
         self.all_sprites.reset()
-        config.score = 0
+        config.difficulty = 0
 
     def loop(self):
         # initiate specific vars
@@ -42,6 +42,7 @@ class Game:
         font = pygame.font.Font(pygame.font.get_default_font(), 36)
         screenw = config.screen.get_width()
         screenh = config.screen.get_height()
+        p_num = len(self.players)
 
         while gaming:
             # time stuff
@@ -71,7 +72,8 @@ class Game:
                 if boxes := mcreations.collisions(player, self.boxes):
                     for box in boxes:
                         box.move("random")
-                        config.score += 1
+                        player.score += 1
+                        config.difficulty += 1
 
                 # player hit? --> death menu
                 if player.status["alive"] > 0:
@@ -80,6 +82,9 @@ class Game:
                         player.status["alive"] = 0
                         player.move_info["move"] = 0
                 elif player.status["alive"] < 0:
+                    # update highscore
+                    if config.sdata["highscore"] < config.difficulty:
+                        config.sdata["highscore"] = config.difficulty
                     # player dead -> DeathMenu -> reset game
                     config.state = "death_menu"
                     return
@@ -94,8 +99,9 @@ class Game:
             self.all_sprites.draw(config.screen)
 
             # TODO fix drawing
-            # draw stamina
-            for player in self.players:
+            # draw stamina and score
+
+            for num, player in enumerate(self.players, 1):
                 color = (80, 80, 80) if player.stamina == 1000 else (150, 150, 150)
                 a = player.rect.left + 4 * config.sizer
                 b = player.rect.bottom
@@ -108,10 +114,15 @@ class Game:
                     # st_surf = font.render(str(player.stamina), True, (0, 0, 0))
                     # config.screen.blit(st_surf, dest=(screenw/2, 50))
 
+                score_string = ";)" if config.score == 69 else str(player.score)
+                text_surface = font.render(score_string, True, (0, 0, 0))
+                config.screen.blit(text_surface, dest=(num * screenw / (p_num+1), 10))
+
+
             # Draw Score
-            score_string = ";)" if config.score == 69 else str(config.score)
-            text_surface = font.render(score_string, True, (0, 0, 0))
-            config.screen.blit(text_surface, dest=(screenw/2, 10))
+            # score_string = ";)" if config.score == 69 else str(config.score)
+            # text_surface = font.render(score_string, True, (0, 0, 0))
+            # config.screen.blit(text_surface, dest=(screenw/2, 10))
 
             #     prog_state["game"] = False
             #     prog_state["main_menu"] = True

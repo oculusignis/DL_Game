@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, player_number: int):
         """Initialize Player with the players number"""
         super().__init__()
-        # general game data
+        # general game sdata
         self.js = pygame.joystick.Joystick(player_number)
 
         # player attributes
@@ -185,7 +185,7 @@ class Sword(pygame.sprite.Sprite):
     """handles the rect for the sword hitbox"""
 
     def __init__(self, mult):
-        # general data
+        # general sdata
         super().__init__()
         self.mult = mult
         self.rect = pygame.rect.Rect(-1, -1, 1, 1)

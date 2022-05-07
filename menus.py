@@ -254,6 +254,18 @@ class DeathMenu:
             opaque_surf = pygame.transform.scale(opaque_surf, (int(width * rel_width), height))
             opaque_rect = opaque_surf.get_rect(center=center)
             old_game.blit(opaque_surf, opaque_rect)
+
+        highscore = f"Highscore: {config.sdata['highscore']}"
+        gamescore = f"Score: {config.difficulty}"
+        highscore_surf = config.font.render(highscore, True, (0, 0, 0))
+        highscore_rect = highscore_surf.get_rect()
+        highscore_rect.center = (config.screen.get_width()/2, 150)
+        old_game.blit(highscore_surf, highscore_rect)
+        gamescore_surf = config.font.render(gamescore, True, (0, 0, 0))
+        gamescore_rect = gamescore_surf.get_rect()
+        gamescore_rect.center = (config.screen.get_width()/2, 200)
+        old_game.blit(gamescore_surf, gamescore_rect)
+
         return old_game
 
     def loop(self):

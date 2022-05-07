@@ -150,7 +150,7 @@ class Player(Character):
     def __init__(self, player_number: int):
         """Initialize Player with the players number"""
         super().__init__()
-        # general game data
+        # general game sdata
         self.js = pygame.joystick.Joystick(player_number)
 
         # player attributes
@@ -158,6 +158,7 @@ class Player(Character):
         self.speed_base = 4
         self.stamina = 1000
         self.stamina_regen = 1
+        self.score = 0
         self.orientation = 'idle'
         self.move_info = {"time": 0, "move": 0}
         self.status = {"alive": 1, "dashed": False, "attacking": False, "invulnerable": False}
@@ -189,6 +190,7 @@ class Player(Character):
         self.image = self.getspriteimage()
         self.stamina = 1000
         self.dash_counter = 0
+        self.score = 0
         self.move((config.screen.get_width() / 2, config.screen.get_height() - config.screen.get_height() / 8))
         self.status = {"alive": 1, "dashed": False, "attacking": False, "invulnerable": False}
 

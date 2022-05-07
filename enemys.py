@@ -55,7 +55,7 @@ class Enemy1(mcreations.Entity):
         # move to closest player
         if range > closest_player[0] > 10:
             closest_player[1].normalize_ip()
-            closest_player[1].scale_to_length(self.speed*dt + config.score*difficulty_scaling)
+            closest_player[1].scale_to_length(self.speed*dt + config.difficulty*difficulty_scaling)
 
             self.pos += closest_player[1]
             self.rect.center = round(self.pos.x), round(self.pos.y)
