@@ -1,28 +1,24 @@
-import json
 
-
-def write(dt: dict):
-    json_object = json.dumps(dt, indent=len(dt))
-    with open("config.json", "w") as file:
-        file.write(json_object)
-
-
-def read():
-    with open("config.json", "r") as file:
-        loaded = json.load(file)
-        return loaded
-
-
-sizer = 3
-testdict = {"hallo": 5,
-            "world": 5,
-            "sizer": sizer}
-
-resetdict = {"sizer": 3,
-             "framerate": 120,
-             "highscore": 0
-             }
 
 if __name__ == "__main__":
-    write(resetdict)
+    a = 5
+    b = a
+    a = 7
+    print(f"{a=} {b=}")
+
+    li = [8, 9, 10]
+    c = li[0]
+    print(f"{li=} {c=}")
+    li[0] = "gugus"
+    print(f"{li=} {c=}")
+    c = 99999
+    print(f"{li=} {c=}")
+
+    list1 = [5, 8, 32, 4930]
+    ref = list1
+    print(f"{list1=} {ref=}")
+    ref[2] = 2
+    print(f"{list1=} {ref=}")
+
+
 
