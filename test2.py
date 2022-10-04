@@ -10,7 +10,7 @@ if __name__ == "__main__":
     c = li[0]
     print(f"{li=} {c=}")
     li[0] = "gugus"
-    print(f"{li=} {c=}")
+    print(f"{li = } {c = }")
     c = 99999
     print(f"{li=} {c=}")
 

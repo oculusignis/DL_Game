@@ -52,7 +52,7 @@ def endit(msg=""):
 
 
 def save(dt: dict):
-    json_object = json.dumps(dt, indent = len(dt))
+    json_object = json.dumps(dt, indent=len(dt))
     with open("config.json", "w") as file:
         file.write(json_object)
 
