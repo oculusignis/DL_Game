@@ -6,7 +6,7 @@ import json
 screen: pygame.Surface
 sheet_button: spriteSheet.SpriteSheet
 sheet_player: spriteSheet.SpriteSheet
-sizer = 2
+sizer = 1
 framerate = 120
 score = 0
 difficulty = 0
@@ -36,7 +36,7 @@ def init(size=(0, 0)):
     global sheet_button
     sheet_button = spriteSheet.SpriteSheet("resources/MenuButtons.png")
     global sheet_player
-    sheet_player = spriteSheet.SpriteSheet("resources/Sam66_22-28.png")
+    sheet_player = spriteSheet.SpriteSheet("resources/Sam6_42.png")
     global font
     font = pygame.font.Font(pygame.font.get_default_font(), 36)
 

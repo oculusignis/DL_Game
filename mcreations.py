@@ -41,6 +41,10 @@ class Entity(pygame.sprite.Sprite):
         self.rect.center = loc
         self.hitbox.center = loc
 
+    def getspriteimage(self):
+        """produces a pygame image from the spritesheet"""
+        pass
+
     def reset(self):
         pass
 
@@ -50,10 +54,6 @@ class Entity(pygame.sprite.Sprite):
 
 class Character(Entity):
     """Entity with abilities"""
-
-    def getspriteimage(self):
-        """produces a pygame image from the spritesheet"""
-        pass
 
     def attack(self, dt):
         pass
@@ -118,7 +118,6 @@ def collisions(entity: Entity, group: EntityGroup):
 # specific Classes
 # -------------------------------------------------------------------------------------------------------
 
-#
 class ColorBox(Entity):
     """test target entitiy"""
 
@@ -168,12 +167,15 @@ class Player(Character):
         # init image and rect
         self.ss = config.sheet_player
         self.image = self.getspriteimage()
-        self.rect = self.image.get_bounding_rect()
+        self.rect = self.image.get_rect()
 
         # init hitboxes
-        self.hitbox = self.rect.copy()
+        self.hitbox = pygame.rect.Rect(0, 0, 22, 22)
 
         self.move(self.pos)
+
+        print(f"{self.rect.size=} --- {self.hitbox.size=}")
+        print(f"{self.image=}\n{self.rect.center=}\n{self.hitbox.center=}")
 
         # dash variables
         self.dash_len = 25
@@ -196,8 +198,8 @@ class Player(Character):
 
     def getspriteimage(self):
         """produces a pygame image from the spritesheet"""
-        sizex = 22
-        sizey = 28
+        sizex = 42
+        sizey = 42
         x = self.move_info["move"] * sizex
         y = orientationLib[self.orientation] * sizey
         return pygame.transform.scale(self.ss.image_at((x, y, sizex, sizey), -1),

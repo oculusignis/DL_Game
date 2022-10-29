@@ -10,6 +10,8 @@ import mcreations
 
 # variables
 bg = (0xeb, 0xd2, 0xbe)
+touch = (255, 255, 255)
+colorflag = False
 edge1 = 1.1 * math.pi
 
 usb_lib = {"X": 0, "A": 1, "B": 2, "Y": 3, "LS": 4, "RS": 5, "Select": 8, "Start": 9}
@@ -68,6 +70,8 @@ class Game:
 
                 player.update(dt)
 
+                print(f"{player.hitbox.center=}\n{player.rect.center=}")
+
                 # player touch box?
                 if boxes := mcreations.collisions(player, self.boxes):
                     for box in boxes:
@@ -93,7 +97,11 @@ class Game:
             self.enemies.update(dt, self.players)
 
             # Set Background Color
-            config.screen.fill(bg)
+
+            if colorflag:
+                config.screen.fill(touch)
+            else:
+                config.screen.fill(bg)
 
             # Draw all entities
             self.all_sprites.draw(config.screen)
